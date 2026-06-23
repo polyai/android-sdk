@@ -1,0 +1,36 @@
+name: Close stale issues and PRs
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v10
+        with:
+          days-before-issue-stale: 30
+          days-before-issue-close: 7
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          stale-issue-label: stale
+          stale-pr-label: stale
+          exempt-issue-labels: pinned,security,keep-open
+          exempt-pr-labels: pinned,security,keep-open
+          stale-issue-message: >
+            This issue has been inactive for 30 days and is now marked stale.
+            Comment to keep it open, otherwise it will be closed in 7 days.
+          close-issue-message: >
+            Closing this issue after 7 days of inactivity since it was marked stale.
+            Reopen it if you're still hitting this.
+          stale-pr-message: >
+            This PR has been inactive for 30 days and is now marked stale.
+            Push or comment to keep it open, otherwise it will be closed in 7 days.
+          close-pr-message: >
+            Closing this PR after 7 days of inactivity since it was marked stale.

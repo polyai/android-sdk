@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright PolyAI Limited -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FF000000" android:pathData="M3,5h18v2H3zM3,9h12v2H3zM3,13h18v2H3zM3,17h8v2H3zM14,17l4,2.5L14,22z" />
+</vector>

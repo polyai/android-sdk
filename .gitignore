@@ -1,0 +1,23 @@
+# Android / Gradle
+.gradle/
+build/
+**/build/
+local.properties
+*.iml
+.idea/
+.cxx/
+.DS_Store
+captures/
+out/
+
+# Dev verification artifacts
+/build-logs/
+/tmp-e2e/
+
+# Keys / secrets must never be committed
+**/secrets.properties
+*.jks
+*.keystore
+
+# Auto-generated Gradle daemon JVM criteria (machine-specific)
+gradle/gradle-daemon-jvm.properties

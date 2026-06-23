@@ -1,0 +1,1183 @@
+public final class ai/poly/messaging/AgentJoinedPayload {
+	public final field agentName Ljava/lang/String;
+	public final field avatarUrl Ljava/net/URI;
+}
+
+public final class ai/poly/messaging/AgentKind : java/lang/Enum {
+	public static final field LIVE Lai/poly/messaging/AgentKind;
+	public static final field POLY Lai/poly/messaging/AgentKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/AgentKind;
+	public static fun values ()[Lai/poly/messaging/AgentKind;
+}
+
+public final class ai/poly/messaging/AgentLeftPayload {
+	public final field reason Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/AgentMessage {
+	public final field agentKind Lai/poly/messaging/AgentKind;
+	public final field agentName Ljava/lang/String;
+	public final field attachments Ljava/util/List;
+	public final field avatarUrl Ljava/net/URI;
+	public final field callActions Ljava/util/List;
+	public final field id Ljava/util/UUID;
+	public final field messageId Ljava/lang/String;
+	public final field suggestions Ljava/util/List;
+	public final field text Ljava/lang/String;
+	public final field timestamp J
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;Ljava/lang/String;Ljava/net/URI;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;Ljava/lang/String;Ljava/net/URI;Ljava/util/List;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;Ljava/lang/String;Ljava/net/URI;Ljava/util/List;Ljava/util/List;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;Ljava/lang/String;Ljava/net/URI;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;Ljava/lang/String;Ljava/net/URI;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/UUID;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;Ljava/lang/String;Ljava/net/URI;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/UUID;J)V
+	public synthetic fun <init> (Ljava/lang/String;Lai/poly/messaging/AgentKind;Ljava/lang/String;Ljava/lang/String;Ljava/net/URI;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/UUID;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/AgentMessageChunkPayload {
+	public final field attachments Ljava/util/List;
+	public final field chunkIndex I
+	public final field isComplete Z
+	public final field messageId Ljava/lang/String;
+	public final field responseSuggestions Ljava/util/List;
+	public final field text Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/AgentMessagePayload {
+	public final field agentName Ljava/lang/String;
+	public final field attachments Ljava/util/List;
+	public final field avatarUrl Ljava/net/URI;
+	public final field chatCallActions Ljava/util/List;
+	public final field endConversation Z
+	public final field messageId Ljava/lang/String;
+	public final field responseSuggestions Ljava/util/List;
+	public final field text Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/Attachment {
+	public final field callToActionText Ljava/lang/String;
+	public final field contentType Lai/poly/messaging/AttachmentContentType;
+	public final field contentUrl Ljava/net/URI;
+	public final field previewImageUrl Ljava/net/URI;
+	public final field title Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/AttachmentContentType : java/lang/Enum {
+	public static final field Companion Lai/poly/messaging/AttachmentContentType$Companion;
+	public static final field IMAGE Lai/poly/messaging/AttachmentContentType;
+	public static final field UNKNOWN Lai/poly/messaging/AttachmentContentType;
+	public static final field URL Lai/poly/messaging/AttachmentContentType;
+	public static final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/AttachmentContentType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getRaw ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/AttachmentContentType;
+	public static fun values ()[Lai/poly/messaging/AttachmentContentType;
+}
+
+public final class ai/poly/messaging/AttachmentContentType$Companion {
+	public final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/AttachmentContentType;
+}
+
+public final class ai/poly/messaging/BuildConfig {
+	public static final field BUILD_TYPE Ljava/lang/String;
+	public static final field DEBUG Z
+	public static final field LIBRARY_PACKAGE_NAME Ljava/lang/String;
+	public static final field VERSION_NAME Ljava/lang/String;
+	public fun <init> ()V
+}
+
+public abstract interface class ai/poly/messaging/Callback {
+	public abstract fun onError (Ljava/lang/Throwable;)V
+	public abstract fun onSuccess (Ljava/lang/Object;)V
+}
+
+public abstract interface class ai/poly/messaging/Cancellable {
+	public abstract fun cancel ()V
+}
+
+public final class ai/poly/messaging/ChatCallAction {
+	public final field contactNumber Ljava/lang/String;
+	public final field id Ljava/util/UUID;
+	public final field title Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/UUID;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/UUID;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class ai/poly/messaging/ChatMessage {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttachments ()Ljava/util/List;
+	public final fun getDelivery ()Lai/poly/messaging/Delivery;
+	public final fun getId ()Ljava/util/UUID;
+	public final fun getSuggestions ()Ljava/util/List;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getTimestamp ()J
+	public fun hashCode ()I
+	public final fun isAgent ()Z
+	public final fun isSystem ()Z
+	public final fun isUser ()Z
+}
+
+public final class ai/poly/messaging/ChatMessage$Agent : ai/poly/messaging/ChatMessage {
+	public final field message Lai/poly/messaging/AgentMessage;
+	public fun <init> (Lai/poly/messaging/AgentMessage;)V
+}
+
+public final class ai/poly/messaging/ChatMessage$System : ai/poly/messaging/ChatMessage {
+	public final field message Lai/poly/messaging/SystemMessage;
+	public fun <init> (Lai/poly/messaging/SystemMessage;)V
+}
+
+public final class ai/poly/messaging/ChatMessage$User : ai/poly/messaging/ChatMessage {
+	public final field message Lai/poly/messaging/UserMessage;
+	public fun <init> (Lai/poly/messaging/UserMessage;)V
+}
+
+public final class ai/poly/messaging/ChatSession {
+	public fun <init> (Lai/poly/messaging/PolyMessagingClient;JLjava/lang/Boolean;)V
+	public synthetic fun <init> (Lai/poly/messaging/PolyMessagingClient;JLjava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addListener (Ljava/util/concurrent/Executor;Lai/poly/messaging/ChatSessionListener;)Lai/poly/messaging/Cancellable;
+	public final fun clearChat ()V
+	public final fun clearSuggestions (Ljava/util/UUID;)V
+	public final fun close ()V
+	public final fun end (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun end (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getAgentAvatarUrl ()Ljava/net/URI;
+	public final fun getAgentAvatarUrlFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getAgentMessages ()Ljava/util/List;
+	public final fun getClient ()Lai/poly/messaging/PolyMessagingClient;
+	public final fun getConnection ()Lai/poly/messaging/ConnectionStatus;
+	public final fun getConnectionFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getFailureReason ()Lai/poly/messaging/PolyError;
+	public final fun getFailureReasonFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getHasEnded ()Z
+	public final fun getHasEndedFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getHasStarted ()Z
+	public final fun getHasStartedFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getLastAgentMessage ()Lai/poly/messaging/AgentMessage;
+	public final fun getMessages ()Ljava/util/List;
+	public final fun getMessagesFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getSystemMessages ()Ljava/util/List;
+	public final fun getUserMessages ()Ljava/util/List;
+	public final fun isAgentTyping ()Z
+	public final fun isAgentTypingFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun isReady ()Z
+	public final fun isReadyFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun removeMessage (Ljava/lang/String;)V
+	public final fun send (Ljava/lang/String;Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun send (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendTyping (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun sendTyping (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class ai/poly/messaging/ChatSessionListener {
+	public abstract fun onChanged (Lai/poly/messaging/ChatSession;)V
+}
+
+public final class ai/poly/messaging/ClientHandoffRequiredPayload {
+	public final field queueName Ljava/lang/String;
+	public final field reason Ljava/lang/String;
+	public final field route Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/CloseCode : java/lang/Enum {
+	public static final field ABNORMAL Lai/poly/messaging/CloseCode;
+	public static final field APP_ERROR Lai/poly/messaging/CloseCode;
+	public static final field CLIENT_REPLACED Lai/poly/messaging/CloseCode;
+	public static final field Companion Lai/poly/messaging/CloseCode$Companion;
+	public static final field NORMAL Lai/poly/messaging/CloseCode;
+	public static final field NO_STATUS Lai/poly/messaging/CloseCode;
+	public static final field SESSION_UNKNOWN Lai/poly/messaging/CloseCode;
+	public static final fun fromCode (I)Lai/poly/messaging/CloseCode;
+	public final fun getCode ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/CloseCode;
+	public static fun values ()[Lai/poly/messaging/CloseCode;
+}
+
+public final class ai/poly/messaging/CloseCode$Companion {
+	public final fun fromCode (I)Lai/poly/messaging/CloseCode;
+}
+
+public final class ai/poly/messaging/Configuration {
+	public final field apiKey Ljava/lang/String;
+	public final field environment Lai/poly/messaging/Environment;
+	public final field heartbeatIntervalSeconds Ljava/lang/Integer;
+	public final field hostIdentifier Ljava/lang/String;
+	public final field logLevel Lai/poly/messaging/LogLevel;
+	public final field maxReconnectAttempts Ljava/lang/Integer;
+	public final field sessionTimeoutSeconds Ljava/lang/Integer;
+	public final field streamingEnabled Z
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;Z)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/messaging/Configuration$Builder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun build ()Lai/poly/messaging/Configuration;
+	public final fun environment (Lai/poly/messaging/Environment;)Lai/poly/messaging/Configuration$Builder;
+	public final fun heartbeatIntervalSeconds (Ljava/lang/Integer;)Lai/poly/messaging/Configuration$Builder;
+	public final fun hostIdentifier (Ljava/lang/String;)Lai/poly/messaging/Configuration$Builder;
+	public final fun logLevel (Lai/poly/messaging/LogLevel;)Lai/poly/messaging/Configuration$Builder;
+	public final fun maxReconnectAttempts (Ljava/lang/Integer;)Lai/poly/messaging/Configuration$Builder;
+	public final fun sessionTimeoutSeconds (Ljava/lang/Integer;)Lai/poly/messaging/Configuration$Builder;
+	public final fun streamingEnabled (Z)Lai/poly/messaging/Configuration$Builder;
+}
+
+public abstract interface class ai/poly/messaging/Connection {
+	public abstract fun disconnect (ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getMessages ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun getRawFrames ()Lkotlinx/coroutines/flow/Flow;
+	public abstract fun send (Lai/poly/messaging/OutgoingEvent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun sendRaw (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ai/poly/messaging/ConnectionCloseEvent {
+	public final field code I
+	public final field reason Ljava/lang/String;
+	public final field wasClean Z
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class ai/poly/messaging/ConnectionStatus {
+	public final fun getReconnectAttempt ()Ljava/lang/Integer;
+	public final fun isActive ()Z
+	public final fun isConnected ()Z
+	public final fun isFailed ()Z
+	public final fun isReconnecting ()Z
+	public final fun isTerminal ()Z
+}
+
+public final class ai/poly/messaging/ConnectionStatus$Closed : ai/poly/messaging/ConnectionStatus {
+	public final field event Lai/poly/messaging/ConnectionCloseEvent;
+	public fun <init> (Lai/poly/messaging/ConnectionCloseEvent;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/ConnectionStatus$Closing : ai/poly/messaging/ConnectionStatus {
+	public static final field INSTANCE Lai/poly/messaging/ConnectionStatus$Closing;
+}
+
+public final class ai/poly/messaging/ConnectionStatus$Connecting : ai/poly/messaging/ConnectionStatus {
+	public static final field INSTANCE Lai/poly/messaging/ConnectionStatus$Connecting;
+}
+
+public final class ai/poly/messaging/ConnectionStatus$Failed : ai/poly/messaging/ConnectionStatus {
+	public final field reason Lai/poly/messaging/PolyError;
+	public fun <init> (Lai/poly/messaging/PolyError;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/ConnectionStatus$Idle : ai/poly/messaging/ConnectionStatus {
+	public static final field INSTANCE Lai/poly/messaging/ConnectionStatus$Idle;
+}
+
+public final class ai/poly/messaging/ConnectionStatus$Open : ai/poly/messaging/ConnectionStatus {
+	public static final field INSTANCE Lai/poly/messaging/ConnectionStatus$Open;
+}
+
+public final class ai/poly/messaging/ConnectionStatus$Reconnecting : ai/poly/messaging/ConnectionStatus {
+	public final field attempt I
+	public fun <init> (I)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/Delivery : java/lang/Enum {
+	public static final field FAILED Lai/poly/messaging/Delivery;
+	public static final field PENDING Lai/poly/messaging/Delivery;
+	public static final field SENT Lai/poly/messaging/Delivery;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/Delivery;
+	public static fun values ()[Lai/poly/messaging/Delivery;
+}
+
+public class ai/poly/messaging/DevSettings {
+	public static final field K_CLUSTER Ljava/lang/String;
+	public static final field K_ENV Ljava/lang/String;
+	public static final field K_HEARTBEAT Ljava/lang/String;
+	public static final field K_LAST_STREAMING Ljava/lang/String;
+	public static final field K_LOG Ljava/lang/String;
+	public static final field K_MAXRECONNECT Ljava/lang/String;
+	public static final field K_REST Ljava/lang/String;
+	public static final field K_STREAMING Ljava/lang/String;
+	public static final field K_STRIP Ljava/lang/String;
+	public static final field K_TIMEOUT Ljava/lang/String;
+	public static final field K_TS Ljava/lang/String;
+	public static final field K_WS Ljava/lang/String;
+	public fun <init> (Landroid/content/Context;)V
+	public fun <init> (Landroid/content/Context;Ljava/lang/String;)V
+	public fun <init> (Landroid/content/Context;Ljava/lang/String;Lai/poly/messaging/DevSettings$EnvironmentKind;)V
+	public fun <init> (Landroid/content/Context;Ljava/lang/String;Lai/poly/messaging/DevSettings$EnvironmentKind;Landroid/content/SharedPreferences;)V
+	public synthetic fun <init> (Landroid/content/Context;Ljava/lang/String;Lai/poly/messaging/DevSettings$EnvironmentKind;Landroid/content/SharedPreferences;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun buildConfiguration ()Lai/poly/messaging/Configuration;
+	public fun environmentDisplayName ()Ljava/lang/String;
+	public final fun getClusterName ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getCustomRestUrl ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getCustomWsUrl ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getEnvironmentKind ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun getHasCustomization ()Z
+	public final fun getHeartbeatIntervalSeconds ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getLastAppliedStreamingEnabled ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getLogLevel ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getMaxReconnectAttempts ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getSessionTimeoutSeconds ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getShowDebugStrip ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getShowMessageTimestamps ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getStreamingEnabled ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun recordSessionApplied ()V
+	public fun resetToDefaults ()V
+	public fun resolvedEnvironment ()Lai/poly/messaging/Environment;
+	public fun setClusterName (Ljava/lang/String;)V
+	public fun setCustomRestUrl (Ljava/lang/String;)V
+	public fun setCustomWsUrl (Ljava/lang/String;)V
+	public fun setEnvironmentKind (Lai/poly/messaging/DevSettings$EnvironmentKind;)V
+	public fun setHeartbeatIntervalSeconds (I)V
+	public fun setLogLevel (Lai/poly/messaging/LogLevel;)V
+	public fun setMaxReconnectAttempts (I)V
+	public fun setSessionTimeoutSeconds (I)V
+	public fun setShowDebugStrip (Z)V
+	public fun setShowMessageTimestamps (Z)V
+	public fun setStreamingEnabled (Z)V
+}
+
+public final class ai/poly/messaging/DevSettings$EnvironmentKind : java/lang/Enum {
+	public static final field CLUSTER Lai/poly/messaging/DevSettings$EnvironmentKind;
+	public static final field CUSTOM Lai/poly/messaging/DevSettings$EnvironmentKind;
+	public static final field Companion Lai/poly/messaging/DevSettings$EnvironmentKind$Companion;
+	public static final field EUW Lai/poly/messaging/DevSettings$EnvironmentKind;
+	public static final field UK Lai/poly/messaging/DevSettings$EnvironmentKind;
+	public static final field US Lai/poly/messaging/DevSettings$EnvironmentKind;
+	public static final fun fromValue (I)Lai/poly/messaging/DevSettings$EnvironmentKind;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getValue ()I
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/DevSettings$EnvironmentKind;
+	public static fun values ()[Lai/poly/messaging/DevSettings$EnvironmentKind;
+}
+
+public final class ai/poly/messaging/DevSettings$EnvironmentKind$Companion {
+	public final fun fromValue (I)Lai/poly/messaging/DevSettings$EnvironmentKind;
+}
+
+public final class ai/poly/messaging/Envelope {
+	public final field id Ljava/lang/String;
+	public final field metadata Lai/poly/messaging/EventMetadata;
+	public final field sequence Ljava/lang/Integer;
+	public final field timestamp J
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public abstract class ai/poly/messaging/Environment {
+	public static final field Companion Lai/poly/messaging/Environment$Companion;
+	public static final fun cluster (Ljava/lang/String;)Lai/poly/messaging/Environment;
+	public static final fun custom (Ljava/net/URI;Ljava/net/URI;)Lai/poly/messaging/Environment;
+}
+
+public final class ai/poly/messaging/Environment$Cluster : ai/poly/messaging/Environment {
+	public final field name Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/Environment$Companion {
+	public final fun cluster (Ljava/lang/String;)Lai/poly/messaging/Environment;
+	public final fun custom (Ljava/net/URI;Ljava/net/URI;)Lai/poly/messaging/Environment;
+}
+
+public final class ai/poly/messaging/Environment$Custom : ai/poly/messaging/Environment {
+	public final field restBaseUrl Ljava/net/URI;
+	public final field wsBaseUrl Ljava/net/URI;
+	public fun <init> (Ljava/net/URI;Ljava/net/URI;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/Environment$EUW : ai/poly/messaging/Environment {
+	public static final field INSTANCE Lai/poly/messaging/Environment$EUW;
+}
+
+public final class ai/poly/messaging/Environment$UK : ai/poly/messaging/Environment {
+	public static final field INSTANCE Lai/poly/messaging/Environment$UK;
+}
+
+public final class ai/poly/messaging/Environment$US : ai/poly/messaging/Environment {
+	public static final field INSTANCE Lai/poly/messaging/Environment$US;
+}
+
+public abstract interface class ai/poly/messaging/EventListener {
+	public abstract fun onEvent (Lai/poly/messaging/MessagingEvent;)V
+}
+
+public final class ai/poly/messaging/EventMetadata {
+	public final field custom Ljava/util/Map;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/HandoffAcceptedPayload {
+	public final field queueName Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/HandoffFailedPayload {
+	public final field reason Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/HandoffQueueStatusPayload {
+	public final field displayMessage Ljava/lang/String;
+	public final field estimatedWaitSeconds Ljava/lang/Integer;
+	public final field position Ljava/lang/Integer;
+	public final field queueName Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/HandoffTimeoutPayload {
+	public final field reason Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/LiveAgentJoinedPayload {
+	public final field agentId Ljava/lang/String;
+	public final field agentName Ljava/lang/String;
+	public final field avatarUrl Ljava/net/URI;
+}
+
+public final class ai/poly/messaging/LiveAgentLeftPayload {
+	public final field agentId Ljava/lang/String;
+	public final field agentName Ljava/lang/String;
+	public final field reason Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/LiveAgentMessagePayload {
+	public final field agentId Ljava/lang/String;
+	public final field agentName Ljava/lang/String;
+	public final field attachments Ljava/util/List;
+	public final field avatarUrl Ljava/net/URI;
+	public final field chatCallActions Ljava/util/List;
+	public final field messageId Ljava/lang/String;
+	public final field responseSuggestions Ljava/util/List;
+	public final field text Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/LiveAgentTypingPayload {
+	public final field agentId Ljava/lang/String;
+	public final field agentName Ljava/lang/String;
+	public final field state Lai/poly/messaging/TypingState;
+}
+
+public final class ai/poly/messaging/LogLevel : java/lang/Enum {
+	public static final field Companion Lai/poly/messaging/LogLevel$Companion;
+	public static final field DEBUG Lai/poly/messaging/LogLevel;
+	public static final field ERROR Lai/poly/messaging/LogLevel;
+	public static final field INFO Lai/poly/messaging/LogLevel;
+	public static final field NONE Lai/poly/messaging/LogLevel;
+	public static final field WARN Lai/poly/messaging/LogLevel;
+	public static final fun fromLevel (I)Lai/poly/messaging/LogLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getLevel ()I
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/LogLevel;
+	public static fun values ()[Lai/poly/messaging/LogLevel;
+}
+
+public final class ai/poly/messaging/LogLevel$Companion {
+	public final fun fromLevel (I)Lai/poly/messaging/LogLevel;
+}
+
+public abstract class ai/poly/messaging/MessagingEvent {
+	public final fun getEnvelope ()Lai/poly/messaging/Envelope;
+	public final fun isAgentEvent ()Z
+	public final fun isConnectionEvent ()Z
+	public final fun isDeliveryEvent ()Z
+	public final fun isHandoffEvent ()Z
+	public final fun isLiveAgentEvent ()Z
+}
+
+public final class ai/poly/messaging/MessagingEvent$AgentJoined : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/AgentJoinedPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/AgentJoinedPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$AgentLeft : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/AgentLeftPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/AgentLeftPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$AgentMessage : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/AgentMessagePayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/AgentMessagePayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$AgentMessageChunk : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/AgentMessageChunkPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/AgentMessageChunkPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$AgentThinking : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public fun <init> (Lai/poly/messaging/Envelope;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$AgentTriggeredHandoff : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public fun <init> (Lai/poly/messaging/Envelope;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$ClientHandoffRequired : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/ClientHandoffRequiredPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/ClientHandoffRequiredPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$Connected : ai/poly/messaging/MessagingEvent {
+	public static final field INSTANCE Lai/poly/messaging/MessagingEvent$Connected;
+}
+
+public final class ai/poly/messaging/MessagingEvent$Disconnected : ai/poly/messaging/MessagingEvent {
+	public final field error Lai/poly/messaging/PolyError;
+	public fun <init> (Lai/poly/messaging/PolyError;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$HandoffAccepted : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/HandoffAcceptedPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/HandoffAcceptedPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$HandoffFailed : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/HandoffFailedPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/HandoffFailedPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$HandoffQueueStatus : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/HandoffQueueStatusPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/HandoffQueueStatusPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$HandoffTimeout : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/HandoffTimeoutPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/HandoffTimeoutPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$Heartbeat : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public fun <init> (Lai/poly/messaging/Envelope;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$LiveAgentJoined : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/LiveAgentJoinedPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/LiveAgentJoinedPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$LiveAgentLeft : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/LiveAgentLeftPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/LiveAgentLeftPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$LiveAgentMessage : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/LiveAgentMessagePayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/LiveAgentMessagePayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$LiveAgentTyping : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/LiveAgentTypingPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/LiveAgentTypingPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$MessageConfirmed : ai/poly/messaging/MessagingEvent {
+	public final field draftId Ljava/lang/String;
+	public final field messageId Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$MessageFailed : ai/poly/messaging/MessagingEvent {
+	public final field draftId Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$MessagePending : ai/poly/messaging/MessagingEvent {
+	public final field draftId Ljava/lang/String;
+	public final field text Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$Reconnecting : ai/poly/messaging/MessagingEvent {
+	public final field attempt I
+	public fun <init> (I)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$RequestPolyAgentJoin : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public fun <init> (Lai/poly/messaging/Envelope;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$SessionEnd : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/SessionEndPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/SessionEndPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$SessionIdleWarning : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public fun <init> (Lai/poly/messaging/Envelope;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$SessionStart : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/SessionStartPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/SessionStartPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$SystemMessage : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/SystemMessagePayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/SystemMessagePayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$UserEndSession : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public fun <init> (Lai/poly/messaging/Envelope;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$UserMessage : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public final field payload Lai/poly/messaging/UserMessageEchoPayload;
+	public fun <init> (Lai/poly/messaging/Envelope;Lai/poly/messaging/UserMessageEchoPayload;)V
+}
+
+public final class ai/poly/messaging/MessagingEvent$UserTyping : ai/poly/messaging/MessagingEvent {
+	public final field env Lai/poly/messaging/Envelope;
+	public fun <init> (Lai/poly/messaging/Envelope;)V
+}
+
+public final class ai/poly/messaging/MessagingEventDebugKt {
+	public static final fun getDebugDetail (Lai/poly/messaging/MessagingEvent;)Ljava/lang/String;
+	public static final fun getDebugSummary (Lai/poly/messaging/MessagingEvent;)Ljava/lang/String;
+}
+
+public abstract class ai/poly/messaging/OutgoingEvent {
+}
+
+public final class ai/poly/messaging/OutgoingEvent$Heartbeat : ai/poly/messaging/OutgoingEvent {
+	public static final field INSTANCE Lai/poly/messaging/OutgoingEvent$Heartbeat;
+}
+
+public final class ai/poly/messaging/OutgoingEvent$RequestPolyAgentJoin : ai/poly/messaging/OutgoingEvent {
+	public static final field INSTANCE Lai/poly/messaging/OutgoingEvent$RequestPolyAgentJoin;
+}
+
+public final class ai/poly/messaging/OutgoingEvent$UserEndConversation : ai/poly/messaging/OutgoingEvent {
+	public static final field INSTANCE Lai/poly/messaging/OutgoingEvent$UserEndConversation;
+}
+
+public final class ai/poly/messaging/OutgoingEvent$UserLeft : ai/poly/messaging/OutgoingEvent {
+	public static final field INSTANCE Lai/poly/messaging/OutgoingEvent$UserLeft;
+}
+
+public final class ai/poly/messaging/OutgoingEvent$UserMessage : ai/poly/messaging/OutgoingEvent {
+	public final field metadata Ljava/util/Map;
+	public final field text Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/messaging/OutgoingEvent$UserTyping : ai/poly/messaging/OutgoingEvent {
+	public final field state Lai/poly/messaging/TypingState;
+	public fun <init> (Lai/poly/messaging/TypingState;)V
+}
+
+public final class ai/poly/messaging/Platform : java/lang/Enum {
+	public static final field ANDROID Lai/poly/messaging/Platform;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getRaw ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/Platform;
+	public static fun values ()[Lai/poly/messaging/Platform;
+}
+
+public abstract class ai/poly/messaging/PolyError : java/lang/Exception {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDebugDescription ()Ljava/lang/String;
+	public final fun isAuthError ()Z
+	public final fun isRetryable ()Z
+	public final fun isSessionError ()Z
+	public final fun isSessionExpired ()Z
+	public final fun isTransportError ()Z
+}
+
+public abstract class ai/poly/messaging/PolyError$Auth : ai/poly/messaging/PolyError {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/messaging/PolyError$Auth$TokenAcquisitionFailed : ai/poly/messaging/PolyError$Auth {
+	public static final field INSTANCE Lai/poly/messaging/PolyError$Auth$TokenAcquisitionFailed;
+}
+
+public final class ai/poly/messaging/PolyError$Auth$Unauthorized : ai/poly/messaging/PolyError$Auth {
+	public static final field INSTANCE Lai/poly/messaging/PolyError$Auth$Unauthorized;
+}
+
+public final class ai/poly/messaging/PolyError$InvalidConfiguration : ai/poly/messaging/PolyError {
+	public final field detail Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public abstract class ai/poly/messaging/PolyError$Message : ai/poly/messaging/PolyError {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/messaging/PolyError$Message$DeliveryFailed : ai/poly/messaging/PolyError$Message {
+	public final field draftId Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$Message$PayloadTooLarge : ai/poly/messaging/PolyError$Message {
+	public final field maxBytes I
+	public fun <init> (I)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public abstract class ai/poly/messaging/PolyError$Session : ai/poly/messaging/PolyError {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/messaging/PolyError$Session$MaxReconnectAttemptsExceeded : ai/poly/messaging/PolyError$Session {
+	public static final field INSTANCE Lai/poly/messaging/PolyError$Session$MaxReconnectAttemptsExceeded;
+}
+
+public final class ai/poly/messaging/PolyError$Session$SessionCreationFailed : ai/poly/messaging/PolyError$Session {
+	public final field code Lai/poly/messaging/SessionErrorCode;
+	public fun <init> (Lai/poly/messaging/SessionErrorCode;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$Session$SessionEnded : ai/poly/messaging/PolyError$Session {
+	public final field reason Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$Session$SessionExpired : ai/poly/messaging/PolyError$Session {
+	public static final field INSTANCE Lai/poly/messaging/PolyError$Session$SessionExpired;
+}
+
+public final class ai/poly/messaging/PolyError$Session$UnexpectedDisconnect : ai/poly/messaging/PolyError$Session {
+	public final field code I
+	public final field reason Ljava/lang/String;
+	public fun <init> (ILjava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public abstract class ai/poly/messaging/PolyError$Transport : ai/poly/messaging/PolyError {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/messaging/PolyError$Transport$NetworkError : ai/poly/messaging/PolyError$Transport {
+	public final field detail Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$Transport$NotConnected : ai/poly/messaging/PolyError$Transport {
+	public static final field INSTANCE Lai/poly/messaging/PolyError$Transport$NotConnected;
+}
+
+public final class ai/poly/messaging/PolyError$Transport$ProtocolError : ai/poly/messaging/PolyError$Transport {
+	public final field reason Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public abstract class ai/poly/messaging/PolyError$Voice : ai/poly/messaging/PolyError {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/messaging/PolyError$Voice$MediaFailed : ai/poly/messaging/PolyError$Voice {
+	public final field detail Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$Voice$NotImplemented : ai/poly/messaging/PolyError$Voice {
+	public static final field INSTANCE Lai/poly/messaging/PolyError$Voice$NotImplemented;
+}
+
+public final class ai/poly/messaging/PolyError$Voice$SignalingFailed : ai/poly/messaging/PolyError$Voice {
+	public final field detail Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$Voice$TimedOut : ai/poly/messaging/PolyError$Voice {
+	public static final field INSTANCE Lai/poly/messaging/PolyError$Voice$TimedOut;
+}
+
+public abstract interface class ai/poly/messaging/PolyLogger {
+	public abstract fun log (Lai/poly/messaging/LogLevel;Ljava/lang/String;Ljava/util/Map;)V
+}
+
+public final class ai/poly/messaging/PolyMessaging {
+	public static final field INSTANCE Lai/poly/messaging/PolyMessaging;
+	public static final field VERSION Ljava/lang/String;
+	public static final fun chat ()Lai/poly/messaging/ChatSession;
+	public static final fun chat (Lai/poly/messaging/Configuration;)Lai/poly/messaging/ChatSession;
+	public static final fun chat (Lai/poly/messaging/Configuration;Ljava/lang/Boolean;)Lai/poly/messaging/ChatSession;
+	public static final fun chat (Ljava/lang/Boolean;)Lai/poly/messaging/ChatSession;
+	public static synthetic fun chat$default (Lai/poly/messaging/Configuration;Ljava/lang/Boolean;ILjava/lang/Object;)Lai/poly/messaging/ChatSession;
+	public static synthetic fun chat$default (Ljava/lang/Boolean;ILjava/lang/Object;)Lai/poly/messaging/ChatSession;
+	public static final fun clearResumableSession ()V
+	public static final fun clearResumableSession (Ljava/lang/String;)V
+	public static final fun configure (Landroid/content/Context;Lai/poly/messaging/Configuration;)Lai/poly/messaging/PolyMessagingClient;
+	public static final fun hasResumableSession ()Z
+	public static final fun hasResumableSession (Ljava/lang/String;)Z
+	public static final fun initialize (Landroid/content/Context;Lai/poly/messaging/Configuration;)V
+	public static final fun resume (Lai/poly/messaging/Configuration;)Lai/poly/messaging/ChatSession;
+	public static final fun resume (Lai/poly/messaging/Configuration;Ljava/lang/Boolean;)Lai/poly/messaging/ChatSession;
+	public static synthetic fun resume$default (Lai/poly/messaging/Configuration;Ljava/lang/Boolean;ILjava/lang/Object;)Lai/poly/messaging/ChatSession;
+	public static final fun start ()Lai/poly/messaging/ChatSession;
+	public static final fun start (Lai/poly/messaging/Configuration;)Lai/poly/messaging/ChatSession;
+	public static final fun start (Lai/poly/messaging/Configuration;Ljava/lang/Boolean;)Lai/poly/messaging/ChatSession;
+	public static final fun start (Ljava/lang/Boolean;)Lai/poly/messaging/ChatSession;
+	public static synthetic fun start$default (Lai/poly/messaging/Configuration;Ljava/lang/Boolean;ILjava/lang/Object;)Lai/poly/messaging/ChatSession;
+	public static synthetic fun start$default (Ljava/lang/Boolean;ILjava/lang/Object;)Lai/poly/messaging/ChatSession;
+	public static final fun voice ()Lai/poly/messaging/voice/PolyCall;
+	public static final fun voice (Lai/poly/messaging/Configuration;)Lai/poly/messaging/voice/PolyCall;
+}
+
+public final class ai/poly/messaging/PolyMessagingClient {
+	public final fun addConnectionStatusListener (Ljava/util/concurrent/Executor;Lai/poly/messaging/ValueListener;)Lai/poly/messaging/Cancellable;
+	public final fun addEventListener (Ljava/util/concurrent/Executor;Lai/poly/messaging/EventListener;)Lai/poly/messaging/Cancellable;
+	public final fun addSessionStateListener (Ljava/util/concurrent/Executor;Lai/poly/messaging/ValueListener;)Lai/poly/messaging/Cancellable;
+	public final fun end (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun end (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public static synthetic fun end$default (Lai/poly/messaging/PolyMessagingClient;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getConfig ()Lai/poly/messaging/Configuration;
+	public final fun getConnection ()Lai/poly/messaging/Connection;
+	public final fun getConnectionStatus ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getEvents ()Lkotlinx/coroutines/flow/SharedFlow;
+	public final fun getSessionState ()Lkotlinx/coroutines/flow/SharedFlow;
+	public final fun resume (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun resume (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun send (Ljava/lang/String;Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun send (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun sendTyping (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun sendTyping (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun shutdown (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun shutdown (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun startNewSession (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun startNewSession (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun voice ()Lai/poly/messaging/voice/PolyCall;
+}
+
+public final class ai/poly/messaging/ResponseSuggestion {
+	public final field id Ljava/util/UUID;
+	public final field messageText Ljava/lang/String;
+	public final field payload Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/UUID;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/UUID;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/SessionCapabilities {
+	public final field heartbeatIntervalSeconds Ljava/lang/Integer;
+	public final field maxMessageSize I
+	public final field maxReconnectAttempts Ljava/lang/Integer;
+	public final field streaming Z
+}
+
+public final class ai/poly/messaging/SessionEndPayload {
+	public final field reason Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/SessionErrorCode : java/lang/Enum {
+	public static final field CONNECTION_CLOSED_ABNORMALLY Lai/poly/messaging/SessionErrorCode;
+	public static final field CONNECTOR_LOOKUP_FAILED Lai/poly/messaging/SessionErrorCode;
+	public static final field CONNECTOR_VALIDATION_FAILED Lai/poly/messaging/SessionErrorCode;
+	public static final field Companion Lai/poly/messaging/SessionErrorCode$Companion;
+	public static final field ERROR_PARSING_REQUEST Lai/poly/messaging/SessionErrorCode;
+	public static final field MESSAGE_TOO_LARGE Lai/poly/messaging/SessionErrorCode;
+	public static final field MISSING_AUTH_HEADERS Lai/poly/messaging/SessionErrorCode;
+	public static final field SESSION_CREATION_FAILED Lai/poly/messaging/SessionErrorCode;
+	public static final field UNKNOWN Lai/poly/messaging/SessionErrorCode;
+	public static final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/SessionErrorCode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getRaw ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/SessionErrorCode;
+	public static fun values ()[Lai/poly/messaging/SessionErrorCode;
+}
+
+public final class ai/poly/messaging/SessionErrorCode$Companion {
+	public final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/SessionErrorCode;
+}
+
+public final class ai/poly/messaging/SessionStartPayload {
+	public final field capabilities Lai/poly/messaging/SessionCapabilities;
+}
+
+public final class ai/poly/messaging/SessionState {
+	public final field error Lai/poly/messaging/SessionErrorCode;
+	public final field hasInvalidApiKey Z
+	public final field isLoading Z
+	public final field isReady Z
+	public final field sessionId Ljava/lang/String;
+	public final field status Lai/poly/messaging/SessionStatus;
+	public fun <init> (Lai/poly/messaging/SessionStatus;ZZ)V
+	public fun <init> (Lai/poly/messaging/SessionStatus;ZZLjava/lang/String;)V
+	public fun <init> (Lai/poly/messaging/SessionStatus;ZZLjava/lang/String;Lai/poly/messaging/SessionErrorCode;)V
+	public fun <init> (Lai/poly/messaging/SessionStatus;ZZLjava/lang/String;Lai/poly/messaging/SessionErrorCode;Z)V
+	public synthetic fun <init> (Lai/poly/messaging/SessionStatus;ZZLjava/lang/String;Lai/poly/messaging/SessionErrorCode;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCanSendMessages ()Z
+	public final fun getErrorMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isError ()Z
+	public final fun isTerminal ()Z
+}
+
+public final class ai/poly/messaging/SessionStatus : java/lang/Enum {
+	public static final field ACTIVE Lai/poly/messaging/SessionStatus;
+	public static final field Companion Lai/poly/messaging/SessionStatus$Companion;
+	public static final field ENDED Lai/poly/messaging/SessionStatus;
+	public static final field EXPIRED Lai/poly/messaging/SessionStatus;
+	public static final field RESTORED Lai/poly/messaging/SessionStatus;
+	public static final field UNKNOWN Lai/poly/messaging/SessionStatus;
+	public static final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/SessionStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getRaw ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/SessionStatus;
+	public static fun values ()[Lai/poly/messaging/SessionStatus;
+}
+
+public final class ai/poly/messaging/SessionStatus$Companion {
+	public final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/SessionStatus;
+}
+
+public abstract class ai/poly/messaging/SystemEvent {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isHandoff ()Z
+	public final fun isTerminal ()Z
+}
+
+public final class ai/poly/messaging/SystemEvent$AgentLeft : ai/poly/messaging/SystemEvent {
+	public final field reasonText Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/SystemEvent$ConversationEnded : ai/poly/messaging/SystemEvent {
+	public final field reasonText Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/SystemEvent$HandoffAccepted : ai/poly/messaging/SystemEvent {
+	public static final field INSTANCE Lai/poly/messaging/SystemEvent$HandoffAccepted;
+}
+
+public final class ai/poly/messaging/SystemEvent$HandoffFailed : ai/poly/messaging/SystemEvent {
+	public final field reasonText Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/SystemEvent$HandoffRequired : ai/poly/messaging/SystemEvent {
+	public final field reasonText Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/SystemEvent$HandoffStarted : ai/poly/messaging/SystemEvent {
+	public static final field INSTANCE Lai/poly/messaging/SystemEvent$HandoffStarted;
+}
+
+public final class ai/poly/messaging/SystemEvent$HandoffTimeout : ai/poly/messaging/SystemEvent {
+	public static final field INSTANCE Lai/poly/messaging/SystemEvent$HandoffTimeout;
+}
+
+public final class ai/poly/messaging/SystemEvent$IdleWarning : ai/poly/messaging/SystemEvent {
+	public static final field INSTANCE Lai/poly/messaging/SystemEvent$IdleWarning;
+}
+
+public final class ai/poly/messaging/SystemEvent$LiveAgentJoined : ai/poly/messaging/SystemEvent {
+	public final field name Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/SystemEvent$LiveAgentLeft : ai/poly/messaging/SystemEvent {
+	public final field reasonText Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/SystemEvent$QueueStatus : ai/poly/messaging/SystemEvent {
+	public final field displayMessage Ljava/lang/String;
+	public final field position Ljava/lang/Integer;
+	public fun <init> (Ljava/lang/Integer;Ljava/lang/String;)V
+}
+
+public final class ai/poly/messaging/SystemEvent$ServerMessage : ai/poly/messaging/SystemEvent {
+	public final field level Lai/poly/messaging/SystemMessageLevel;
+	public final field text Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/SystemMessageLevel;)V
+}
+
+public final class ai/poly/messaging/SystemMessage {
+	public final field event Lai/poly/messaging/SystemEvent;
+	public final field id Ljava/util/UUID;
+	public final field timestamp J
+	public fun <init> (Lai/poly/messaging/SystemEvent;)V
+	public fun <init> (Lai/poly/messaging/SystemEvent;Ljava/util/UUID;)V
+	public fun <init> (Lai/poly/messaging/SystemEvent;Ljava/util/UUID;J)V
+	public synthetic fun <init> (Lai/poly/messaging/SystemEvent;Ljava/util/UUID;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/SystemMessageLevel : java/lang/Enum {
+	public static final field Companion Lai/poly/messaging/SystemMessageLevel$Companion;
+	public static final field ERROR Lai/poly/messaging/SystemMessageLevel;
+	public static final field INFO Lai/poly/messaging/SystemMessageLevel;
+	public static final field WARNING Lai/poly/messaging/SystemMessageLevel;
+	public static final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/SystemMessageLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getRaw ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/SystemMessageLevel;
+	public static fun values ()[Lai/poly/messaging/SystemMessageLevel;
+}
+
+public final class ai/poly/messaging/SystemMessageLevel$Companion {
+	public final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/SystemMessageLevel;
+}
+
+public final class ai/poly/messaging/SystemMessagePayload {
+	public final field level Lai/poly/messaging/SystemMessageLevel;
+	public final field message Ljava/lang/String;
+}
+
+public final class ai/poly/messaging/TypingState : java/lang/Enum {
+	public static final field Companion Lai/poly/messaging/TypingState$Companion;
+	public static final field STARTED Lai/poly/messaging/TypingState;
+	public static final field STOPPED Lai/poly/messaging/TypingState;
+	public static final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/TypingState;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getRaw ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/messaging/TypingState;
+	public static fun values ()[Lai/poly/messaging/TypingState;
+}
+
+public final class ai/poly/messaging/TypingState$Companion {
+	public final fun fromRaw (Ljava/lang/String;)Lai/poly/messaging/TypingState;
+}
+
+public final class ai/poly/messaging/UserMessage {
+	public final field delivery Lai/poly/messaging/Delivery;
+	public final field draftId Ljava/lang/String;
+	public final field id Ljava/util/UUID;
+	public final field text Ljava/lang/String;
+	public final field timestamp J
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Delivery;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Delivery;Ljava/lang/String;Ljava/util/UUID;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Delivery;Ljava/lang/String;Ljava/util/UUID;J)V
+	public synthetic fun <init> (Ljava/lang/String;Lai/poly/messaging/Delivery;Ljava/lang/String;Ljava/util/UUID;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/UserMessageEchoPayload {
+	public final field messageId Ljava/lang/String;
+	public final field text Ljava/lang/String;
+}
+
+public abstract interface class ai/poly/messaging/ValueListener {
+	public abstract fun onChanged (Ljava/lang/Object;)V
+}
+
+public final class ai/poly/messaging/VersionKt {
+	public static final fun getPOLY_MESSAGING_VERSION ()Ljava/lang/String;
+}
+
+public abstract class ai/poly/messaging/voice/CallState {
+	public final fun isActive ()Z
+}
+
+public final class ai/poly/messaging/voice/CallState$Connected : ai/poly/messaging/voice/CallState {
+	public static final field INSTANCE Lai/poly/messaging/voice/CallState$Connected;
+}
+
+public final class ai/poly/messaging/voice/CallState$Connecting : ai/poly/messaging/voice/CallState {
+	public static final field INSTANCE Lai/poly/messaging/voice/CallState$Connecting;
+}
+
+public final class ai/poly/messaging/voice/CallState$Ended : ai/poly/messaging/voice/CallState {
+	public static final field INSTANCE Lai/poly/messaging/voice/CallState$Ended;
+}
+
+public final class ai/poly/messaging/voice/CallState$Failed : ai/poly/messaging/voice/CallState {
+	public final field error Lai/poly/messaging/PolyError;
+	public fun <init> (Lai/poly/messaging/PolyError;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/voice/CallState$Idle : ai/poly/messaging/voice/CallState {
+	public static final field INSTANCE Lai/poly/messaging/voice/CallState$Idle;
+}
+
+public final class ai/poly/messaging/voice/PolyCall {
+	public final fun end (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun end (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getState ()Lai/poly/messaging/voice/CallState;
+	public final fun getStateFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun setMuted (ZLjava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun setMuted (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun start (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun start (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+

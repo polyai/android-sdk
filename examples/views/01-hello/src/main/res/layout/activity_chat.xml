@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical">
+    <TextView android:id="@+id/banner" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:background="#FFF3CD" android:padding="8dp" android:gravity="center" android:visibility="gone"
+        android:text="Reconnecting…" />
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/list"
+        android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:padding="8dp" android:clipToPadding="false" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:padding="8dp" android:gravity="center_vertical">
+        <EditText android:id="@+id/composer" android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:hint="Message" android:inputType="textShortMessage|textMultiLine"
+            android:maxLines="5" android:importantForAutofill="no" />
+        <Button android:id="@+id/send" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Send" />
+    </LinearLayout>
+</LinearLayout>

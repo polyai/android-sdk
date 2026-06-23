@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright PolyAI Limited — horizontally scrolling quick-reply pills (mirrors SuggestionsView). -->
+<HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/suggestionsScroll"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="12dp"
+    android:paddingTop="2dp"
+    android:paddingBottom="6dp"
+    android:scrollbars="none">
+    <LinearLayout
+        android:id="@+id/suggestionsStack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" />
+</HorizontalScrollView>

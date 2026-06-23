@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright PolyAI Limited — connect-screen info card (corner 14). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#F2F2F7" />
+    <corners android:radius="14dp" />
+</shape>

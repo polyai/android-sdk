@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright PolyAI Limited -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Resume banner — shown ~3s when a prior conversation was restored. -->
+        <LinearLayout
+            android:id="@+id/resumeBanner"
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:background="#D9007AFF"
+            android:visibility="gone">
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_resume"
+                android:tint="#FFFFFF"
+                android:contentDescription="@null" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Resumed previous conversation"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <!-- OS-level offline banner (red) — stacks ABOVE the SDK's reconnect banner. -->
+        <LinearLayout
+            android:id="@+id/offlineBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="#2EFF3B30"
+            android:paddingVertical="6dp"
+            android:visibility="gone">
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_wifi_off"
+                android:contentDescription="@null" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="You're offline"
+                android:textColor="#FF3B30"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Connection banner — visible only while ConnectionStatus.Reconnecting. -->
+        <LinearLayout
+            android:id="@+id/banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingVertical="6dp"
+            android:visibility="gone">
+            <ProgressBar
+                android:id="@+id/bannerSpinner"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="16dp"
+                android:layout_height="16dp" />
+            <TextView
+                android:id="@+id/bannerLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="Reconnecting..."
+                android:textColor="#993C3C43"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Message list + loading skeleton + floating "New messages" pill. -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingVertical="8dp" />
+            <!-- Pre-handshake skeleton — shown (and the list hidden) while !isReady && messages empty. -->
+            <ai.poly.examples.fullreference.views.LoadingSkeletonView
+                android:id="@+id/skeleton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+            <TextView
+                android:id="@+id/newMessagesPill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/bg_pill_new_messages"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="↓  New messages"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:elevation="4dp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!-- Input bar (swapped with the chat-ended footer on hasEnded). -->
+        <LinearLayout
+            android:id="@+id/inputContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="#4A3C3C43" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="bottom"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp">
+                <FrameLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_input_field">
+                    <EditText
+                        android:id="@+id/composer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:hint="Message..."
+                        android:inputType="textShortMessage|textCapSentences"
+                        android:imeOptions="actionSend"
+                        android:maxLines="5"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="8dp"
+                        android:textSize="15sp"
+                        android:importantForAutofill="no" />
+                </FrameLayout>
+                <ImageView
+                    android:id="@+id/send"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:padding="8dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_arrow_upward"
+                    android:contentDescription="Send"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Chat-ended footer. -->
+        <LinearLayout
+            android:id="@+id/chatEndedView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:background="#F2F2F7"
+            android:paddingVertical="12dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingHorizontal="20dp"
+                android:text="This conversation has ended. Please start a new chat to continue."
+                android:textColor="#993C3C43"
+                android:textSize="15sp" />
+            <Button
+                android:id="@+id/startNew"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Start New Conversation" />
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>

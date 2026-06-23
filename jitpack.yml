@@ -1,0 +1,15 @@
+# JitPack build config. JitPack only builds PUBLIC repos on the free tier — this file makes the repo
+# build cleanly there once it's public (or via a public SDK mirror). It builds ONLY the publishable SDK
+# module (not the example apps) and installs it to the local Maven repo JitPack serves from.
+#
+# Resulting consumer coordinate (JitPack rewrites the group to com.github.*):
+#   repositories { maven("https://jitpack.io") }
+#   implementation("com.github.PolyAI.android-sdk:polymessaging:<tag>")
+#
+# Note: the public, branded install path is Maven Central (ai.poly:messaging). JitPack is a
+# convenience/community channel only. GPG signing is skipped automatically (no key on JitPack — the
+# build guards signAllPublications() on the key being present), which is fine; JitPack doesn't sign.
+jdk:
+  - openjdk17
+install:
+  - ./gradlew :polymessaging:publishToMavenLocal

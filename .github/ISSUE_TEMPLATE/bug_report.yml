@@ -1,0 +1,63 @@
+name: Bug report
+description: Something in the SDK isn't working as documented.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      description: The `ai.poly:messaging` version (see `POLY_MESSAGING_VERSION`).
+      placeholder: "0.8.0"
+    validations:
+      required: true
+  - type: input
+    id: agp-gradle
+    attributes:
+      label: AGP / Gradle / Kotlin
+      placeholder: "AGP 8.13, Gradle 8.13, Kotlin 2.2.0"
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version / device or emulator
+      placeholder: "Android 14, Pixel 7 emulator (API 34)"
+    validations:
+      required: true
+  - type: dropdown
+    id: integration-style
+    attributes:
+      label: Integration style
+      options:
+        - Jetpack Compose
+        - Android Views (XML)
+        - Both
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: A minimal repro, ideally against one of the `examples/` apps.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional)
+      description: Redact API keys and session identifiers.
+      render: shell
