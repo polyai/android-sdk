@@ -4,7 +4,7 @@
 #
 # Resulting consumer coordinate (JitPack rewrites the group to com.github.*):
 #   repositories { maven("https://jitpack.io") }
-#   implementation("com.github.PolyAI.android-sdk:polymessaging:<tag>")
+#   implementation("com.github.polyai:android-sdk:<tag>")
 #
 # Note: the public, branded install path is Maven Central (ai.poly:messaging). JitPack is a
 # convenience/community channel only. GPG signing is skipped automatically (no key on JitPack — the

@@ -1,6 +1,6 @@
 # PolyMessaging Android SDK
 
-[![CI](https://github.com/PolyAI/android-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/PolyAI/android-sdk/actions/workflows/ci.yml)
+[![CI](https://github.com/polyai/android-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/polyai/android-sdk/actions/workflows/ci.yml)
 ![API](https://img.shields.io/badge/API-24%2B-blue)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2%2B-blueviolet)
 ![Maven Central](https://img.shields.io/badge/Maven%20Central-ai.poly%3Amessaging-orange)
