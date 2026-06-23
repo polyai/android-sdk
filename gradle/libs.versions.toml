@@ -5,7 +5,7 @@ kotlin = "2.2.0"
 coroutines = "1.10.2"
 okhttp = "5.4.0"
 androidxCore = "1.13.1"
-androidxLifecycle = "2.10.0"
+androidxLifecycle = "2.11.0"
 androidxSecurity = "1.1.0-alpha07"
 
 # Examples (Compose + Views)
