@@ -9,7 +9,7 @@ androidxLifecycle = "2.10.0"
 androidxSecurity = "1.1.0-alpha07"
 
 # Examples (Compose + Views)
-composeBom = "2025.06.00"
+composeBom = "2026.06.00"
 activityCompose = "1.9.3"
 coil = "2.7.0"
 markwon = "4.6.2"
