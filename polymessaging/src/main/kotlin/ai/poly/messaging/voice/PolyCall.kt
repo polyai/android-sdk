@@ -17,8 +17,11 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.Executor
 
 /**
- * A voice call. **Voice is not yet implemented in this SDK build** — there is no bundled
- * on-device media (WebRTC audio) engine, so [start] surfaces [PolyError.Voice.NotImplemented].
+ * A voice call placeholder. This artifact (`ai.poly:messaging`) ships **without** a bundled
+ * on-device media engine, so [start] surfaces [PolyError.Voice.NotImplemented].
+ *
+ * Live WebRTC voice calling lives in the companion **`ai.poly:voice`** artifact — add that
+ * dependency and use `ai.poly.voice.PolyVoice.call(context, config)` instead.
  */
 public class PolyCall internal constructor(
     @Suppress("UNUSED_PARAMETER") private val config: Configuration,

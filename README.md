@@ -7,11 +7,12 @@
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue)
 [![Develop with Claude Code](https://img.shields.io/badge/Develop%20with-Claude%20Code-d97757)](https://claude.ai/download)
 
-Add AI-powered chat to your Android app. The SDK is **headless** — it handles token auth,
-the WebSocket, streaming, reconnection, delivery tracking, and live-agent handoff. You bring the UI.
+Add AI-powered **chat** and **voice** to your Android app. The SDK is **headless** — it handles token
+auth, the WebSocket, streaming, reconnection, delivery tracking, and live-agent handoff. You bring the UI.
 
 - **[Quick start](#quick-start)** — paste an `Activity`/`@Composable` and you have chat.
 - **[Integration guide](#integration-guide)** — observe one object, `ChatSession`.
+- **[Voice calling](#voice-calling-aipolyvoice)** — live WebRTC voice calls with `ai.poly:voice`.
 
 Reference: [Configuration](#configuration) · [Error handling](#error-handling) · [How it works](#how-it-works) · [Raw transport](#advanced-raw-transport) · [Example apps](#example-apps).
 
@@ -31,6 +32,7 @@ Reference: [Configuration](#configuration) · [Error handling](#error-handling) 
 | 📎 | Attachments | Images, link cards, CTA phone buttons |
 | 📡 | Delivery tracking | Optimistic → confirmed → failed, per message |
 | 🔧 | Escape hatch | Raw WebSocket transport |
+| 📞 | Voice calling | Live two-way WebRTC calls + audio-output routing (`ai.poly:voice`) |
 
 ## Install
 
@@ -53,7 +55,7 @@ Then declare the dependency — the three forms below are equivalent (same artif
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("ai.poly:messaging:0.8.0")
+    implementation("ai.poly:messaging:0.9.0")
 }
 ```
 
@@ -62,7 +64,7 @@ dependencies {
 ```groovy
 // build.gradle
 dependencies {
-    implementation 'ai.poly:messaging:0.8.0'
+    implementation 'ai.poly:messaging:0.9.0'
 }
 ```
 
@@ -70,7 +72,7 @@ dependencies {
 
 ```toml
 [versions]
-polyMessaging = "0.8.0"
+polyMessaging = "0.9.0"
 
 [libraries]
 poly-messaging = { module = "ai.poly:messaging", version.ref = "polyMessaging" }
@@ -117,7 +119,7 @@ class HelloApplication : Application() {
 > top of `MainActivity.onCreate()` (simplest; it re-runs on activity recreation, so prefer
 > `Application.onCreate()` for real apps).
 
-> **Quick-start dependencies.** Beyond the SDK itself (`implementation("ai.poly:messaging:0.8.0")`), the
+> **Quick-start dependencies.** Beyond the SDK itself (`implementation("ai.poly:messaging:0.9.0")`), the
 > only line a Compose app must add for the snippet below is **lifecycle-runtime-compose** (for
 > `collectAsStateWithLifecycle`):
 >
@@ -388,7 +390,7 @@ Full details in [Streaming](#streaming).
 > **`chat()` vs `start()`** — `chat()` resumes the previous conversation if one exists (within the ~10-minute server WebSocket idle window), else starts fresh; `start()` always starts fresh. `PolyMessaging.hasResumableSession()` tells you which to offer.
 > **Lifecycle:** initialize once at app launch; keep one `ChatSession` per chat surface (a `remember { }` in Compose, a stored property in Views); call `session.close()` when the surface is dismissed to release its observers, and `session.client.shutdown()` when you're done with the client entirely.
 
-*Example app: [`examples/compose/01-hello`](examples/compose/01-hello) and [`examples/views/01-hello`](examples/views/01-hello) are this quick start, runnable as-is. The full ladder — 01-Hello, 02-Standard, 03-RichContent, 04-Resilience, 05-Handoff, 06-FullReference, 07-Playground — is available across both UI toolkits; see [Example apps](#example-apps).*
+*Example app: [`examples/chat/compose/01-hello`](examples/chat/compose/01-hello) and [`examples/chat/views/01-hello`](examples/chat/views/01-hello) are this quick start, runnable as-is. The full ladder — 01-Hello, 02-Standard, 03-RichContent, 04-Resilience, 05-Handoff, 06-FullReference, 07-Playground — is available across both UI toolkits; see [Example apps](#example-apps).*
 
 ---
 
@@ -577,7 +579,7 @@ fun systemLabel(event: SystemEvent): String = when (event) {
 
 That's the foundation. The rest of this section is just *which field or case* each feature uses.
 
-*Example app:* the full render loop is the heart of [`01-Hello`](examples/compose/01-hello) (Compose `MessageRow`) and its Views twin [`01-Hello`](examples/views/01-hello) — both runnable. [`02-Standard`](examples/compose/02-standard) / [`02-Standard`](examples/views/02-standard) (also runnable) layer delivery state, suggestions, typing, and the system pills on top of the same `when`.
+*Example app:* the full render loop is the heart of [`01-Hello`](examples/chat/compose/01-hello) (Compose `MessageRow`) and its Views twin [`01-Hello`](examples/chat/views/01-hello) — both runnable. [`02-Standard`](examples/chat/compose/02-standard) / [`02-Standard`](examples/chat/views/02-standard) (also runnable) layer delivery state, suggestions, typing, and the system pills on top of the same `when`.
 
 ## Adding each feature
 
@@ -630,7 +632,7 @@ val alt = PolyMessaging.chat(streamingEnabled = false)   // this surface only
 
 Either way, your render code — the `when` over `messages` from [the core pattern](#the-core-pattern-render-messages-yourself) — doesn't change.
 
-*Example app:* [01-Hello (Compose)](examples/compose/01-hello/) · [01-Hello (Views)](examples/views/01-hello/) — both stream agent replies by default (just `PolyMessaging.chat()` with the default config). For a live toggle to compare with `streamingEnabled = false` side by side, see [07-Playground](examples/compose/07-playground/).
+*Example app:* [01-Hello (Compose)](examples/chat/compose/01-hello/) · [01-Hello (Views)](examples/chat/views/01-hello/) — both stream agent replies by default (just `PolyMessaging.chat()` with the default config). For a live toggle to compare with `streamingEnabled = false` side by side, see [07-Playground](examples/chat/compose/07-playground/).
 
 ### Connection & reconnect
 **Data:** `session.connection` — show a banner only while `ConnectionStatus.Reconnecting` (drops go `Open → Reconnecting(n) → Open`, no `Closed` flash). `session.failureReason` is terminal — recover with `session.client.startNewSession()` (or a fresh `chat()`/`start()`); `resume()` does **not** reconnect. Use `isConnected` / `isReconnecting` / `isFailed` (full list under [Connection states](#connection-states)).
@@ -693,7 +695,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
     }
 }
 ```
-*Example app:* [02-Standard (Compose)](examples/compose/02-standard/) · [02-Standard (Views)](examples/views/02-standard/) · [04-Resilience](examples/compose/04-resilience/).
+*Example app:* [02-Standard (Compose)](examples/chat/compose/02-standard/) · [02-Standard (Views)](examples/chat/views/02-standard/) · [04-Resilience](examples/chat/compose/04-resilience/).
 
 **Device offline is a separate signal.** `session.connection` tracks the *socket*, not whether the *phone* lost Wi-Fi. For that, register a `ConnectivityManager.NetworkCallback` and show a distinct "You're offline" bar — the two can stack: offline (device) on top, reconnecting (socket) below. See 04-Resilience.
 
@@ -752,7 +754,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
     }
 }
 ```
-*Example app:* [04-Resilience (Compose)](examples/compose/04-resilience/) · [04-Resilience (Views)](examples/views/04-resilience/) (full-screen terminal-error screen) · [06-FullReference (Compose)](examples/compose/06-fullreference/) · [06-FullReference (Views)](examples/views/06-fullreference/) (in a screen state machine).
+*Example app:* [04-Resilience (Compose)](examples/chat/compose/04-resilience/) · [04-Resilience (Views)](examples/chat/views/04-resilience/) (full-screen terminal-error screen) · [06-FullReference (Compose)](examples/chat/compose/06-fullreference/) · [06-FullReference (Views)](examples/chat/views/06-fullreference/) (in a screen state machine).
 
 ### Loading & empty states
 **Data:** `isReady` (false until connected) + `messages.isEmpty()`. Show a spinner until the first messages arrive, then swap to the transcript.
@@ -795,7 +797,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
     }
 }
 ```
-*Example app:* [04-Resilience (Compose)](examples/compose/04-resilience/) · [04-Resilience (Views)](examples/views/04-resilience/).
+*Example app:* [04-Resilience (Compose)](examples/chat/compose/04-resilience/) · [04-Resilience (Views)](examples/chat/views/04-resilience/).
 
 ### Delivery state & retry
 **Data:** `UserMessage.delivery` is a `Delivery` enum (`PENDING` → `SENT` → `FAILED`). Restyle the bubble per state; on `FAILED`, drop the draft with `removeMessage(draftId)` then re-`send` so you don't duplicate. Tip: delay the "Sending…" label ~500 ms so fast confirmations don't flash it.
@@ -866,7 +868,7 @@ private fun retry(message: UserMessage) {
     lifecycleScope.launch { runCatching { session.send(message.text) } }
 }
 ```
-*Example app:* [02-Standard (Compose)](examples/compose/02-standard/) · [02-Standard (Views)](examples/views/02-standard/).
+*Example app:* [02-Standard (Compose)](examples/chat/compose/02-standard/) · [02-Standard (Views)](examples/chat/views/02-standard/).
 
 ### Typing
 **Data:** `isAgentTyping` (+ `agentAvatarUrl`) shows the dots; call `session.sendTyping()` on every keystroke to tell the agent — throttled, auto-STOPPED after idle, and `isAgentTyping` clears on the next agent message.
@@ -919,7 +921,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
     }
 }
 ```
-*Example app:* [02-Standard (Compose)](examples/compose/02-standard/) · [02-Standard (Views)](examples/views/02-standard/).
+*Example app:* [02-Standard (Compose)](examples/chat/compose/02-standard/) · [02-Standard (Views)](examples/chat/views/02-standard/).
 
 ### Suggestions (quick replies)
 **Data:** `AgentMessage.suggestions` (`List<ResponseSuggestion>`, agent-only). Render under the last message; on tap, `clearSuggestions(messageId)` then `send(suggestion.messageText)`. Only the latest agent message shows pills, and they scroll away with history.
@@ -1001,7 +1003,7 @@ val onSuggestionTap: (UUID, ResponseSuggestion) -> Unit = { messageId, suggestio
 
 > `ChatMessage.suggestions` is exposed on the base `ChatMessage` (empty for user/system rows), so the "last message has pills" check works without first matching `ChatMessage.Agent`.
 
-*Example app:* [02-Standard (Compose)](examples/compose/02-standard/) · [02-Standard (Views)](examples/views/02-standard/).
+*Example app:* [02-Standard (Compose)](examples/chat/compose/02-standard/) · [02-Standard (Views)](examples/chat/views/02-standard/).
 
 ### Rich text & links
 **Data:** `AgentMessage.text` is the agent's text, delivered **raw**. It's usually Markdown — `**bold**`, `*italic*`, `` `code` ``, `[links](https://…)` — but it can also contain a small subset of **HTML** (most commonly `<br>` line breaks), because the backend serves the same message to the web chat widget, which renders it as HTML. The SDK never strips or converts it — you render it. Render with [Markwon](https://github.com/noties/Markwon) (Views) or `HtmlCompat.fromHtml` for the HTML subset; on Compose, hand the same Markwon-produced `Spanned` to an `AndroidView(TextView)`, or annotate the string yourself.
@@ -1050,7 +1052,7 @@ class MessageHolder(private val b: ItemMessageBinding) : RecyclerView.ViewHolder
 
 > **Handling HTML (`<br>` & friends).** Because the same agent text is rendered by the web chat widget as HTML, a reply can arrive with literal tags — e.g. `…how can I help?<br><br>Pick an option:`. Markdown parsers don't convert HTML, so those tags would render raw. The advanced examples (`03-RichContent`, `06-FullReference`, and the rest of `03`–`07`) run a small `normalizeAgentHtml` pass first that mirrors the web widget's DOMPurify allow-list — `a, br, b, i, em, strong, p, ul, ol, li, code` — mapping `<br>`→newline, `<b>`/`<strong>`→`**`, `<i>`/`<em>`→`*`, `<a href>`→`[text](url)`, lists→bullets, decoding HTML entities, and dropping any other tag (`HtmlCompat.fromHtml` is the quick alternative for the HTML subset alone). The minimal 01-Hello / 02-Standard examples deliberately skip it (they render `m.text` plainly to stay minimal), so they show `<br>` raw — port `normalizeAgentHtml` if your agent emits HTML.
 
-*Example app:* [03-RichContent (Compose)](examples/compose/03-richcontent/) · [03-RichContent (Views)](examples/views/03-richcontent/). Note the examples stay dependency-free instead of pulling in Markwon: Compose hand-rolls the same normalize-then-parse pass into an `AnnotatedString` (`components/RichText.kt`), and Views builds the equivalent `Spanned` manually (`RichTextSpans.kt`) — Markwon (above) is the drop-in production alternative.
+*Example app:* [03-RichContent (Compose)](examples/chat/compose/03-richcontent/) · [03-RichContent (Views)](examples/chat/views/03-richcontent/). Note the examples stay dependency-free instead of pulling in Markwon: Compose hand-rolls the same normalize-then-parse pass into an `AnnotatedString` (`components/RichText.kt`), and Views builds the equivalent `Spanned` manually (`RichTextSpans.kt`) — Markwon (above) is the drop-in production alternative.
 
 ### Attachments, link cards & call buttons
 An agent message can carry images, link preview-cards, and `tel:` call buttons — all on `AgentMessage`. Filter `attachments` by `contentType` and render each kind; drop `UNKNOWN` (it exists for forward-compat).
@@ -1158,7 +1160,7 @@ fun bind(message: ChatMessage, context: Context) {
 
 Each link card opens `contentUrl` on tap; call buttons dial a sanitized `tel:` (digits + leading `+`). `ACTION_DIAL` opens the dialer pre-filled (no `CALL_PHONE` permission needed); use `ACTION_CALL` only if you want to place the call directly.
 
-*Example app:* [03-RichContent (Compose)](examples/compose/03-richcontent/) · [03-RichContent (Views)](examples/views/03-richcontent/).
+*Example app:* [03-RichContent (Compose)](examples/chat/compose/03-richcontent/) · [03-RichContent (Views)](examples/chat/views/03-richcontent/).
 
 ### Live agent handoff
 **No special listening** — handoff is already in `messages`: progress as `ChatMessage.System` events (your `systemLabel(event)` from the core pattern renders them), live-agent replies as `ChatMessage.Agent` with `agentKind == AgentKind.LIVE`, live typing via `isAgentTyping`. Just tint the live agent so the user can tell a human took over.
@@ -1206,7 +1208,7 @@ fun bindAgent(m: AgentMessage) {
 
 `SystemEvent.LiveAgentLeft` is terminal (the SDK flips `hasEnded`). To deep-link a handoff route, observe [`session.client.events`](#side-effects-clientevents) for `MessagingEvent.ClientHandoffRequired` / `LiveAgentJoined`.
 
-*Example app:* [05-Handoff (Compose)](examples/compose/05-handoff/) · [05-Handoff (Views)](examples/views/05-handoff/).
+*Example app:* [05-Handoff (Compose)](examples/chat/compose/05-handoff/) · [05-Handoff (Views)](examples/chat/views/05-handoff/).
 
 ### Message timestamps
 **Data:** `ChatMessage.timestamp` (epoch millis, UTC; also on each `UserMessage` / `AgentMessage` / `SystemMessage`). Format with `DateUtils` or a `java.time` `DateTimeFormatter`.
@@ -1244,7 +1246,7 @@ fun bind(message: ChatMessage) {
 
 For a date-grouped separator row (when the gap between consecutive messages crosses a date boundary, insert a row with the date), see the playground.
 
-*Example app:* [07-Playground (Compose)](examples/compose/07-playground/) · [07-Playground (Views)](examples/views/07-playground/).
+*Example app:* [07-Playground (Compose)](examples/chat/compose/07-playground/) · [07-Playground (Views)](examples/chat/views/07-playground/).
 
 ### Avatars & keyboard
 **Data:** `agentAvatarUrl` (latest, on the session) and `AgentMessage.avatarUrl` (per-message, `URI?`); load with Coil. Keyboard handling is yours — `Modifier.imePadding()` / `WindowInsets.ime` (Compose) or `adjustResize` + `WindowInsetsCompat` (Views).
@@ -1310,7 +1312,7 @@ ViewCompat.setOnApplyWindowInsetsListener(binding.content) { v, insets ->
 
 The session-level `agentAvatarUrl` (a `StateFlow<URI?>`) is the latest avatar — handy for a header or the typing-indicator row; `AgentMessage.avatarUrl` is the per-bubble one shown above.
 
-*Example app:* [05-Handoff (Compose)](examples/compose/05-handoff/) · [05-Handoff (Views)](examples/views/05-handoff/).
+*Example app:* [05-Handoff (Compose)](examples/chat/compose/05-handoff/) · [05-Handoff (Views)](examples/chat/views/05-handoff/).
 
 ## Side effects: `client.events`
 
@@ -1385,7 +1387,7 @@ class ChatActivity : ComponentActivity() {
 
 > Tie the collection to the view lifecycle (Compose `LaunchedEffect`, or Views `repeatOnLifecycle`) and subscribe **before** sending — `events` is lazy-start.
 
-*Example app:* the **05-Handoff** app subscribes to `session.client.events` exactly like this — Compose `ChatScreen.kt` collects it in a `LaunchedEffect`, Views `ChatActivity.kt` in a `lifecycleScope.launch` collector — handling `LiveAgentJoined` / `ClientHandoffRequired` side effects (title updates, deep links). [06-FullReference](examples/compose/06-fullreference/) and [07-Playground](examples/compose/07-playground/) also tap `client.events` (`NewMessageNotifier`, `DevDiagnostics`).
+*Example app:* the **05-Handoff** app subscribes to `session.client.events` exactly like this — Compose `ChatScreen.kt` collects it in a `LaunchedEffect`, Views `ChatActivity.kt` in a `lifecycleScope.launch` collector — handling `LiveAgentJoined` / `ClientHandoffRequired` side effects (title updates, deep links). [06-FullReference](examples/chat/compose/06-fullreference/) and [07-Playground](examples/chat/compose/07-playground/) also tap `client.events` (`NewMessageNotifier`, `DevDiagnostics`).
 
 ### In-app new-message alerts (local-only workaround)
 
@@ -1777,23 +1779,86 @@ lifecycleScope.launch {
 
 > `sendRaw` bypasses delivery tracking, retry, and `local_id` correlation — no `MessagePending` / `MessageConfirmed`. Use it only when the managed `session.client.send(...)` path doesn't fit.
 
+## Voice calling (`ai.poly:voice`)
+
+Live, two-way WebRTC voice calls to a PolyAI agent ship in a **separate** artifact so chat-only apps
+stay lean (the call path pulls in the native libwebrtc audio engine). Add it alongside the messaging
+SDK — it reuses the same `Configuration`:
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    implementation("ai.poly:messaging:0.9.0")
+    implementation("ai.poly:voice:0.9.0")
+}
+```
+
+```kotlin
+import ai.poly.voice.PolyVoice
+
+val call = PolyVoice.call(
+    context,
+    Configuration(apiKey = "YOUR_API_KEY"),          // connector token (X-Token)
+    VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"),  // WebRTC gateway token — distinct, also required
+)
+
+// Observe the lifecycle: Idle → Connecting → Connected → Ended / Failed.
+lifecycleScope.launch {
+    repeatOnLifecycle(Lifecycle.State.STARTED) {
+        call.state.collect { state -> render(state) } // state.error is a PolyError.Voice on Failed
+    }
+}
+
+lifecycleScope.launch { call.start() }   // after RECORD_AUDIO is granted
+call.setMuted(true)                      // in-call controls
+call.end()
+```
+
+`CallState`, `PolyError.Voice`, `Configuration`, and `Environment` are the same types from
+`ai.poly:messaging` — no new vocabulary. A call needs **two credentials, both required and distinct**,
+from [Agent Studio](https://studio.poly.ai) › Connector Settings: the **API key** (`Configuration.apiKey`,
+authenticates the connector) and the **WebRTC token** (`VoiceOptions.webrtcToken`, authenticates the media
+gateway). It also needs the **`RECORD_AUDIO`** runtime permission — the SDK declares it; you request the
+grant before `start()`.
+
+📖 **Full voice guide → [`polyvoice/README.md`](polyvoice/README.md)** — permissions, audio-output routing
+(speaker / earpiece / headset / Bluetooth), interruptions, background calls (foreground service), and R8.
+Runnable demos: [`examples/voice/compose`](examples/voice/compose/) ·
+[`examples/voice/views`](examples/voice/views/).
+
 ## Dev tools (QA)
 
 For internal builds, `DevSettings` is a `SharedPreferences`-backed runtime `Configuration` builder — flip environment, streaming, logging, and other knobs (each exposed as a `StateFlow`, and assembled via `buildConfiguration()`) without rebuilding. The **07-Playground** example pairs it with an on-screen diagnostics strip and event log (`MessagingEvent.debugSummary` / `debugDetail`), plus the [raw transport](#advanced-raw-transport) tap for protocol-level pokes. These are for development/QA — they bake in no credentials and aren't needed in production.
 
 ## Example apps
 
-A 7-rung ladder, mirrored across **Jetpack Compose** and **Android Views** — open a module in Android Studio, set your `apiKey`, and Run. Each level builds on the previous one; see its README for what's new.
+Examples live under [`examples/`](examples/), split by product — **[`chat/`](examples/chat/)**
+(`ai.poly:messaging`) and **[`voice/`](examples/voice/)** (`ai.poly:voice`) — each mirrored across
+**Jetpack Compose** and **Android Views**. Open a module in Android Studio, set your `apiKey`, and Run.
+
+### Chat (`examples/chat`)
+
+A 7-rung ladder — each level builds on the previous one; see its README for what's new.
 
 | Level | What it adds | Compose · Views |
 |---|---|---|
-| **01 Hello** | initialize, render, send | [Compose](examples/compose/01-hello/) · [Views](examples/views/01-hello/) |
-| **02 Standard** | typing, suggestions, delivery, reconnect, end + start-new | [Compose](examples/compose/02-standard/) · [Views](examples/views/02-standard/) |
-| **03 Rich Content** | attachments, link cards, `tel:` actions, Markdown | [Compose](examples/compose/03-richcontent/) · [Views](examples/views/03-richcontent/) |
-| **04 Resilience** | offline banner, loading skeleton, terminal error + retry | [Compose](examples/compose/04-resilience/) · [Views](examples/views/04-resilience/) |
-| **05 Handoff** | full live-agent ladder | [Compose](examples/compose/05-handoff/) · [Views](examples/views/05-handoff/) |
-| **06 Full reference** | production resume + start-new flows | [Compose](examples/compose/06-fullreference/) · [Views](examples/views/06-fullreference/) |
-| **07 Playground** | diagnostics, runtime config, streaming toggle | [Compose](examples/compose/07-playground/) · [Views](examples/views/07-playground/) |
+| **01 Hello** | initialize, render, send | [Compose](examples/chat/compose/01-hello/) · [Views](examples/chat/views/01-hello/) |
+| **02 Standard** | typing, suggestions, delivery, reconnect, end + start-new | [Compose](examples/chat/compose/02-standard/) · [Views](examples/chat/views/02-standard/) |
+| **03 Rich Content** | attachments, link cards, `tel:` actions, Markdown | [Compose](examples/chat/compose/03-richcontent/) · [Views](examples/chat/views/03-richcontent/) |
+| **04 Resilience** | offline banner, loading skeleton, terminal error + retry | [Compose](examples/chat/compose/04-resilience/) · [Views](examples/chat/views/04-resilience/) |
+| **05 Handoff** | full live-agent ladder | [Compose](examples/chat/compose/05-handoff/) · [Views](examples/chat/views/05-handoff/) |
+| **06 Full reference** | production resume + start-new flows | [Compose](examples/chat/compose/06-fullreference/) · [Views](examples/chat/views/06-fullreference/) |
+| **07 Playground** | diagnostics, runtime config, streaming toggle | [Compose](examples/chat/compose/07-playground/) · [Views](examples/chat/views/07-playground/) |
+
+### Voice (`examples/voice`)
+
+A one-screen **tap-to-call** demo on `ai.poly:voice` — build a `VoiceCall`, request the mic, start /
+mute / end, and switch the audio output (speaker / earpiece / headset / Bluetooth) mid-call. Set your
+connector token + WebRTC token in the `PolyVoice.call(...)` block. See [Voice calling](#voice-calling-aipolyvoice).
+
+| Demo | What it shows | Compose · Views |
+|---|---|---|
+| **Tap to call** | `PolyVoice.call`, `CallState`, mic permission, mute/end, audio-output picker | [Compose](examples/voice/compose/) · [Views](examples/voice/views/) |
 
 ## Requirements
 

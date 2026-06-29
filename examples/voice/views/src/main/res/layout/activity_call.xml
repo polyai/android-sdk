@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright PolyAI Limited -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:gravity="center"
+    android:padding="24dp">
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="PolyAI Voice" android:textSize="24sp" android:textStyle="bold" />
+
+    <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:gravity="center" android:paddingTop="8dp" android:paddingBottom="40dp"
+        android:textSize="16sp" android:text="Tap to call the agent" />
+
+    <Button android:id="@+id/callButton" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Start call" />
+
+    <Button android:id="@+id/muteButton" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" android:text="Mute" android:visibility="gone" />
+
+    <TextView android:id="@+id/audioLabel" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginTop="24dp" android:text="Audio output" android:textStyle="bold"
+        android:textColor="#555555" android:visibility="gone" />
+
+    <!-- Audio-output picker: device buttons are added programmatically from call.audio. -->
+    <LinearLayout android:id="@+id/deviceRow" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:layout_marginTop="8dp" android:visibility="gone" />
+</LinearLayout>

@@ -13,9 +13,11 @@ plugins {
     alias(libs.plugins.bcv)
 }
 
-// binary-compatibility-validator: only the published SDK has a tracked ABI; ignore samples/tests.
+// binary-compatibility-validator: only the published SDKs have a tracked ABI; ignore samples/tests.
 apiValidation {
-    // Only :polymessaging has a tracked public ABI; ignore the example apps + container projects.
-    ignoredProjects.addAll(subprojects.map { it.name }.filter { it != "polymessaging" })
+    // The published SDKs (:polymessaging, :polyvoice) have a tracked public ABI; ignore the
+    // example apps + container projects.
+    val tracked = setOf("polymessaging", "polyvoice")
+    ignoredProjects.addAll(subprojects.map { it.name }.filter { it !in tracked })
 }
 

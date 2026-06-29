@@ -76,8 +76,8 @@ public sealed class Environment {
     public object EUW : Environment()
 
     /**
-     * A named cluster not covered by the production regions, e.g. `cluster("dev")`
-     * resolves to `messaging.dev.poly.ai`.
+     * A named cluster not covered by the production regions — the name maps to
+     * `messaging.<name>.poly.ai`.
      */
     public class Cluster(@JvmField public val name: String) : Environment() {
         override fun equals(other: Any?): Boolean = other is Cluster && name == other.name

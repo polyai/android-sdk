@@ -40,6 +40,8 @@ class PolyErrorDescriptionTests {
         PolyError.Voice.NotImplemented,
         PolyError.Voice.SignalingFailed("ICE failed"),
         PolyError.Voice.MediaFailed("no microphone"),
+        PolyError.Voice.Disconnected,
+        PolyError.Voice.Interrupted,
         PolyError.Voice.TimedOut,
         PolyError.InvalidConfiguration("token empty"),
     )

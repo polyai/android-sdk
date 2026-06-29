@@ -21,3 +21,8 @@ out/
 
 # Auto-generated Gradle daemon JVM criteria (machine-specific)
 gradle/gradle-daemon-jvm.properties
+
+# Internal scratch / tooling / working docs — kept local, not part of the SDK.
+# (iOS→Android parity audit artifacts, multi-agent workflow scripts, implementation notes.)
+/scripts/
+/docs/
