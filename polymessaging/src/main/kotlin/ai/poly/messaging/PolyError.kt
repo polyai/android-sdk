@@ -90,10 +90,10 @@ public sealed class PolyError(message: String) : Exception(message) {
             Transport("Not connected — please wait for the connection to recover and try again.")
     }
 
-    /** Voice-call failures. Voice is not yet implemented in this build. */
+    /** Voice-call failures. Live voice calling ships in the separate `ai.poly:voice` artifact. */
     public sealed class Voice(message: String) : PolyError(message) {
         public object NotImplemented :
-            Voice("Voice calling isn't available in this SDK build.")
+            Voice("Voice calling needs the ai.poly:voice add-on — add the dependency and use ai.poly.voice.PolyVoice.")
 
         public class SignalingFailed(@JvmField public val detail: String) :
             Voice(if (detail.isEmpty()) "Voice call setup failed." else "Voice call setup failed: $detail") {
@@ -106,6 +106,20 @@ public sealed class PolyError(message: String) : Exception(message) {
             override fun equals(other: Any?): Boolean = this === other || (other is MediaFailed && detail == other.detail)
             override fun hashCode(): Int = detail.hashCode()
         }
+
+        /**
+         * The media connection dropped after the call was established (network change / lost
+         * connectivity) and did not recover within the grace window. Distinct from [MediaFailed]
+         * (a hard negotiation/engine failure) so callers can treat a transient drop as retryable.
+         */
+        public object Disconnected : Voice("The call was disconnected. Please try again.")
+
+        /**
+         * The call was interrupted by the system taking audio focus away for good — e.g. an incoming
+         * phone call the user answered, or another app starting an exclusive audio session. The call
+         * was torn down and the microphone released; the consumer can start a new call afterwards.
+         */
+        public object Interrupted : Voice("The call was interrupted. Please try again.")
 
         public object TimedOut : Voice("Voice call timed out.")
     }
@@ -127,6 +141,7 @@ public sealed class PolyError(message: String) : Exception(message) {
         get() = when (this) {
             is Transport -> true
             is Session.UnexpectedDisconnect, is Session.MaxReconnectAttemptsExceeded -> true
+            is Voice.Disconnected, is Voice.Interrupted -> true
             else -> false
         }
 
@@ -153,6 +168,8 @@ public sealed class PolyError(message: String) : Exception(message) {
             is Voice.NotImplemented -> "voice(notImplemented)"
             is Voice.SignalingFailed -> "voice(signalingFailed($detail))"
             is Voice.MediaFailed -> "voice(mediaFailed($detail))"
+            is Voice.Disconnected -> "voice(disconnected)"
+            is Voice.Interrupted -> "voice(interrupted)"
             is Voice.TimedOut -> "voice(timedOut)"
             is InvalidConfiguration -> "invalidConfiguration($detail)"
         }

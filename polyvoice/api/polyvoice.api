@@ -1,0 +1,75 @@
+public final class ai/poly/voice/AudioDevice {
+	public final field name Ljava/lang/String;
+	public final field type Lai/poly/voice/AudioDevice$Type;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ai/poly/voice/AudioDevice$Type : java/lang/Enum {
+	public static final field BLUETOOTH Lai/poly/voice/AudioDevice$Type;
+	public static final field EARPIECE Lai/poly/voice/AudioDevice$Type;
+	public static final field SPEAKER_PHONE Lai/poly/voice/AudioDevice$Type;
+	public static final field UNKNOWN Lai/poly/voice/AudioDevice$Type;
+	public static final field WIRED_HEADSET Lai/poly/voice/AudioDevice$Type;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lai/poly/voice/AudioDevice$Type;
+	public static fun values ()[Lai/poly/voice/AudioDevice$Type;
+}
+
+public final class ai/poly/voice/AudioState {
+	public final field availableDevices Ljava/util/List;
+	public final field selectedDevice Lai/poly/voice/AudioDevice;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ai/poly/voice/BuildConfig {
+	public static final field BUILD_TYPE Ljava/lang/String;
+	public static final field DEBUG Z
+	public static final field LIBRARY_PACKAGE_NAME Ljava/lang/String;
+	public static final field VERSION_NAME Ljava/lang/String;
+	public fun <init> ()V
+}
+
+public final class ai/poly/voice/PolyVoice {
+	public static final field INSTANCE Lai/poly/voice/PolyVoice;
+	public static final fun call (Landroid/content/Context;Lai/poly/messaging/Configuration;Lai/poly/voice/VoiceOptions;)Lai/poly/voice/VoiceCall;
+}
+
+public final class ai/poly/voice/VoiceCall {
+	public final fun addAudioListener (Ljava/util/concurrent/Executor;Lai/poly/messaging/ValueListener;)Lai/poly/messaging/Cancellable;
+	public final fun close ()V
+	public final fun end (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun end (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getAudio ()Lai/poly/voice/AudioState;
+	public final fun getAudioFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getState ()Lai/poly/messaging/voice/CallState;
+	public final fun getStateFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun isMuted ()Z
+	public final fun setAudioDevice (Lai/poly/voice/AudioDevice;Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun setAudioDevice (Lai/poly/voice/AudioDevice;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun setMuted (ZLjava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun setMuted (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun start (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun start (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class ai/poly/voice/VoiceOptions {
+	public final field signalingHost Ljava/lang/String;
+	public final field speakerphone Z
+	public final field webrtcToken Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/voice/VoiceOptions$Builder {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun build ()Lai/poly/voice/VoiceOptions;
+	public final fun signalingHost (Ljava/lang/String;)Lai/poly/voice/VoiceOptions$Builder;
+	public final fun speakerphone (Z)Lai/poly/voice/VoiceOptions$Builder;
+}
+

@@ -47,7 +47,7 @@ internal class Backoff(
 
 /** Resolves a backend [Environment] to its REST + WS base URLs. */
 internal object EnvironmentUrls {
-    // Verified against the live V2 messaging backend (webchat env): REST base ends in
+    // Verified against the live V2 messaging backend: REST base ends in
     // `/api/v1` (paths /access-token, /sessions); WS endpoint is `<host>/ws`. Cluster
     // names accept [a-z0-9-].
     private const val REST_PATH = "/api/v1"
@@ -63,7 +63,7 @@ internal object EnvironmentUrls {
         is Environment.Custom -> env.restBaseUrl.toString().trimEnd('/')
     }
 
-    /** WS endpoint, already including the `/ws` path (e.g. wss://messaging.dev.poly.ai/ws). */
+    /** WS endpoint, already including the `/ws` path (e.g. wss://messaging.us-1.poly.ai/ws). */
     fun wsBaseUrl(env: Environment): String = when (env) {
         is Environment.US -> "wss://messaging.us-1.poly.ai$WS_PATH"
         is Environment.UK -> "wss://messaging.uk-1.poly.ai$WS_PATH"

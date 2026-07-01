@@ -30,22 +30,27 @@ dependencyResolutionManagement {
 
 rootProject.name = "polymessaging-android"
 
-// The publishable SDK.
+// The publishable SDKs.
 include(":polymessaging")
+// Voice calling (WebRTC) — separate artifact so chat-only consumers stay lean.
+include(":polyvoice")
 
-// Example ladder: 7 rungs x {compose, views} = 14 modules.
-// Uncomment each as it is implemented (M4/M5). Kept here so the layout is visible from day one.
-include(":examples:compose:01-hello")
-include(":examples:compose:02-standard")
-include(":examples:compose:03-richcontent")
-include(":examples:compose:04-resilience")
-include(":examples:compose:05-handoff")
-include(":examples:compose:06-fullreference")
-include(":examples:compose:07-playground")
-include(":examples:views:01-hello")
-include(":examples:views:02-standard")
-include(":examples:views:03-richcontent")
-include(":examples:views:04-resilience")
-include(":examples:views:05-handoff")
-include(":examples:views:06-fullreference")
-include(":examples:views:07-playground")
+// Voice ("tap to call") demo, uses :polyvoice — {compose, views}.
+include(":examples:voice:compose")
+include(":examples:voice:views")
+
+// Chat example ladder: 7 rungs x {compose, views} = 14 modules.
+include(":examples:chat:compose:01-hello")
+include(":examples:chat:compose:02-standard")
+include(":examples:chat:compose:03-richcontent")
+include(":examples:chat:compose:04-resilience")
+include(":examples:chat:compose:05-handoff")
+include(":examples:chat:compose:06-fullreference")
+include(":examples:chat:compose:07-playground")
+include(":examples:chat:views:01-hello")
+include(":examples:chat:views:02-standard")
+include(":examples:chat:views:03-richcontent")
+include(":examples:chat:views:04-resilience")
+include(":examples:chat:views:05-handoff")
+include(":examples:chat:views:06-fullreference")
+include(":examples:chat:views:07-playground")

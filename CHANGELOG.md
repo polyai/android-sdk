@@ -6,6 +6,18 @@ is pre-1.0, breaking changes bump the **minor** version.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-30
+
+Adds the `ai.poly:voice` WebRTC voice-calling SDK (first publish) alongside `ai.poly:messaging:0.9.0`.
+
+### Added
+- **Voice calling (`ai.poly:voice`):** live, two-way WebRTC voice calls to a PolyAI agent — call
+  lifecycle (`CallState`), mute, accessory-aware audio-output routing with mid-call switching
+  (speaker / earpiece / wired / Bluetooth), audio-focus interruption handling, signaling reconnect,
+  and a foreground-service recipe for background calls. Separate artifact; reuses the messaging
+  `Configuration`. See [`polyvoice/README.md`](polyvoice/README.md).
+- **`PolyError.Voice`** error cases (e.g. `Disconnected`, `Interrupted`) on the shared error type.
+
 ## [0.8.0] - 2026-06-16
 
 First public release on Maven Central (`ai.poly:messaging:0.8.0`).
