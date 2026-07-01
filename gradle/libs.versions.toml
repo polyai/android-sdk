@@ -31,7 +31,7 @@ espresso = "3.6.1"
 uiautomator = "2.3.0"
 
 # Tooling plugins
-vanniktechPublish = "0.35.0"      # Gradle 8.13 / JDK 11+ compatible (0.36 needs Gradle 9)
+vanniktechPublish = "0.37.0"      # Gradle 8.13 / JDK 11+ compatible (0.36 needs Gradle 9)
 bcv = "0.18.1"                     # binary-compatibility-validator
 dokka = "2.2.0"
 
