@@ -802,7 +802,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
 ### Delivery state & retry
 **Data:** `UserMessage.delivery` is a `Delivery` enum (`PENDING` → `SENT` → `FAILED`). Restyle the bubble per state; on `FAILED`, drop the draft with `removeMessage(draftId)` then re-`send` so you don't duplicate. Tip: delay the "Sending…" label ~500 ms so fast confirmations don't flash it.
 
-> **What the SDK already does for you:** an unconfirmed send is retried automatically every 3 s, up to 3 times, and each retry waits out a mid-reconnect socket (up to 15 s) before transmitting — so `FAILED` only lands after the ladder is exhausted (~12 s fully offline). Your retry button is for *after* that.
+> **What the SDK does — and doesn't — do for you:** it **never auto-resends**. One send is one send, so a message can't be delivered twice. An unconfirmed send settles on `FAILED` as soon as it can't be acked: **immediately** if it never reached an open socket (offline at send time), **at the moment** the connection drops or reconnects while it's still in flight, or after a **10 s** confirm window on an otherwise-healthy socket where the server never echoed. Your retry button isn't a backstop for the SDK's own retries — it's the only thing that turns a `FAILED` message back into a send, so the UI has to offer it.
 
 ```kotlin
 // Compose — inside the items {} of your message list (see the core pattern);
