@@ -90,7 +90,7 @@ Connector Settings** (the same connector you use for chat):
 | Value | What it is | Required? | Sent as |
 |---|---|---|---|
 | **API key** — `Configuration.apiKey` | your **connector token** | **Yes** | `X-Token` (authenticates the call) |
-| **WebRTC token** — `VoiceOptions.webrtcToken` | the **auth token** for the media connection — a **distinct** token from the API key | **Yes** | the offer `authToken` (gateway) or `Authorization: Bearer` (bridge) |
+| **WebRTC token** — `VoiceOptions.webrtcToken` | the **auth token** for the media connection — a **distinct** token from the API key | **Yes** | `Authorization: Bearer` when the call is provisioned |
 
 ```kotlin
 PolyVoice.call(
@@ -101,11 +101,11 @@ PolyVoice.call(
 ```
 
 Both are **always required and always distinct**: the API key authenticates the *connector*, the WebRTC
-token authenticates the *media gateway*. (The example apps set both.)
+token authenticates the *media backend*. (The example apps set both.)
 
 > The two tokens sit in different places on purpose: the **API key** authenticates the *connector* and
 > is shared by chat and voice, so it lives on the shared `Configuration`; the **WebRTC token**
-> authenticates the *voice gateway* only, so it's a required voice-side credential on `VoiceOptions`
+> authenticates the *voice backend* only, so it's a required voice-side credential on `VoiceOptions`
 > rather than dead weight on the chat config.
 
 Two more values have sensible defaults, so **most apps don't set them** — but good to know:
@@ -116,41 +116,33 @@ Two more values have sensible defaults, so **most apps don't set them** — but 
   Override it only if your connector is registered against a specific host in Agent Studio:
   `Configuration(apiKey = "…", hostIdentifier = "https://your-site.com")`.
 
-## Choosing a backend (`VoiceTransport`)
+## How a call connects
 
-PolyAI is migrating voice from **`webrtc-gateway`** to **`webrtc-bridge`**. The SDK ships both, and
-`VoiceOptions.transport` picks one:
+Calls are placed over PolyAI's **`webrtc-bridge`**. The older `webrtc-gateway` path was removed in
+MES-1658 — it is no longer operable, so there is nothing to choose between and **no API change**:
+the same `PolyVoice.call(context, config, options)` with the same two credentials.
 
-```kotlin
-VoiceOptions(webrtcToken = "…")                                          // GATEWAY — the default
-VoiceOptions(webrtcToken = "…", transport = VoiceTransport.BRIDGE)       // webrtc-bridge
-```
+What changed underneath, in case you're debugging a call:
 
-`GATEWAY` stays the default while the bridge finishes its production rollout, so **you don't have to
-do anything**. Opt into `BRIDGE` to test against it early.
-
-What actually changes, in case you're debugging a call:
-
-| | `GATEWAY` | `BRIDGE` |
+| | before (gateway) | now (bridge) |
 |---|---|---|
 | Call setup | one signalling WebSocket | `POST /api/v1/call`, then SDP over HTTPS |
 | Credential | token inside the SDP offer | `Authorization: Bearer` on provision |
 | Call id | minted by this SDK | minted by the bridge (`call-<8 hex>`) |
 | ICE | trickled after the offer | gathered **before** the offer is sent |
-| Agent audio | arrives on the first answer | a second negotiation after connect |
+| Agent audio | arrived on the first answer | a second negotiation after connect |
 | Media terminates at | PolyAI's gateway | Cloudflare's edge |
 | STUN fallback | `stun.l.google.com` | `stun.cloudflare.com` |
 
-Everything above the transport is identical: the same `VoiceCall`, `CallState`, mute, audio routing
-and errors. A call placed on either backend links to the same messaging session, so the agent
-transcript is unchanged.
+Everything you bind to is unchanged: `VoiceCall`, `CallState`, mute, audio routing and errors, and
+the call still links to the same messaging session, so the agent transcript is the same.
 
-> **Note:** the backend is compiled into your app, so switching is an **SDK version bump plus a Play
-> release** — there is no server-side flag that can move a shipped app. Plan the migration as a
-> release, not a config change.
+`start()` still returns as soon as the call is under way, with the state `Connecting`; observe
+`state` for `Connected` exactly as before. The agent-track negotiation that starts the agent's audio
+runs after that, on your behalf.
 
-> **Custom / self-hosted:** `VoiceOptions.signalingHost` overrides the host of whichever transport is
-> selected (required with `Environment.Custom`).
+> **Custom / self-hosted:** `VoiceOptions.signalingHost` now names the **bridge** host (required with
+> `Environment.Custom`).
 
 ## Audio output (speaker / earpiece / headset / Bluetooth)
 

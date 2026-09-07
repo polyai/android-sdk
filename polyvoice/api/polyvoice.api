@@ -59,13 +59,11 @@ public final class ai/poly/voice/VoiceCall {
 public final class ai/poly/voice/VoiceOptions {
 	public final field signalingHost Ljava/lang/String;
 	public final field speakerphone Z
-	public final field transport Lai/poly/voice/VoiceTransport;
 	public final field webrtcToken Ljava/lang/String;
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Z)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;ZLai/poly/voice/VoiceTransport;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ZLai/poly/voice/VoiceTransport;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class ai/poly/voice/VoiceOptions$Builder {
@@ -73,14 +71,5 @@ public final class ai/poly/voice/VoiceOptions$Builder {
 	public final fun build ()Lai/poly/voice/VoiceOptions;
 	public final fun signalingHost (Ljava/lang/String;)Lai/poly/voice/VoiceOptions$Builder;
 	public final fun speakerphone (Z)Lai/poly/voice/VoiceOptions$Builder;
-	public final fun transport (Lai/poly/voice/VoiceTransport;)Lai/poly/voice/VoiceOptions$Builder;
-}
-
-public final class ai/poly/voice/VoiceTransport : java/lang/Enum {
-	public static final field BRIDGE Lai/poly/voice/VoiceTransport;
-	public static final field GATEWAY Lai/poly/voice/VoiceTransport;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lai/poly/voice/VoiceTransport;
-	public static fun values ()[Lai/poly/voice/VoiceTransport;
 }
 

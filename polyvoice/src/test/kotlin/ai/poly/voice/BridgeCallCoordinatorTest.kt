@@ -35,7 +35,7 @@ class BridgeCallCoordinatorTest {
         val rest: FakeRestApi,
         val bridge: FakeBridgeApi,
         val link: FakeSessionLink,
-        val events: FakeSignalingTransport,
+        val events: FakeEventsTransport,
         val peer: FakeWebRtcPeer,
         val audio: FakeAudioControl,
         val scope: CoroutineScope,
@@ -47,7 +47,7 @@ class BridgeCallCoordinatorTest {
         rest: FakeRestApi = FakeRestApi(),
         bridge: FakeBridgeApi = FakeBridgeApi(),
         link: FakeSessionLink = FakeSessionLink(),
-        events: FakeSignalingTransport = FakeSignalingTransport(),
+        events: FakeEventsTransport = FakeEventsTransport(),
         peer: FakeWebRtcPeer = FakeWebRtcPeer(),
         audio: FakeAudioControl = FakeAudioControl(),
         connectionTimeoutMs: Long = 30_000,
@@ -161,7 +161,7 @@ class BridgeCallCoordinatorTest {
         val rig = rig()
         connect(rig)
 
-        assertEquals(IceServer.BRIDGE_DEFAULT, rig.peer.lastIceServers)
+        assertEquals(IceServer.DEFAULT, rig.peer.lastIceServers)
         assertEquals(listOf("stun:stun.cloudflare.com:3478"), rig.peer.lastIceServers.first().urls)
         rig.scope.cancel()
     }

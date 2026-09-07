@@ -14,16 +14,15 @@ internal data class IceServer(
     val credential: String? = null,
 ) {
     internal companion object {
-        /** The public-STUN fallback used when the gateway's ice-servers endpoint is unavailable. */
-        val DEFAULT: List<IceServer> = listOf(IceServer(urls = listOf("stun:stun.l.google.com:19302")))
-
         /**
-         * STUN fallback for the `webrtc-bridge` path. Media terminates at Cloudflare's edge there,
-         * so Cloudflare's own STUN endpoint is the supported one — never the gateway's servers.
-         * Used only until the bridge returns an authoritative `iceServers` list in its provision
-         * response (RUN-1780), which will carry TURN for calls that need a relay.
+         * STUN fallback when the bridge's provision response carries no ICE servers.
+         *
+         * Media terminates at Cloudflare's edge, so Cloudflare's own STUN endpoint is the supported
+         * one — the old `stun.l.google.com` default went out with the gateway. TURN relay (needed
+         * behind symmetric NAT / CGNAT) arrives in the provision response once the bridge sends one
+         * (RUN-1780).
          */
-        val BRIDGE_DEFAULT: List<IceServer> = listOf(IceServer(urls = listOf("stun:stun.cloudflare.com:3478")))
+        val DEFAULT: List<IceServer> = listOf(IceServer(urls = listOf("stun:stun.cloudflare.com:3478")))
 
         /**
          * Parse an `iceServers` array. Shared by the gateway's dedicated endpoint and the bridge,

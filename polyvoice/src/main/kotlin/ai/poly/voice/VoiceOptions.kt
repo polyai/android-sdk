@@ -7,16 +7,13 @@ package ai.poly.voice
  * gateway token, which is a distinct value from the API key. The rest are dev / self-hosted overrides
  * with working defaults for the standard regions.
  *
- * @property webrtcToken The connector's **WebRTC token** from Agent Studio — the credential the WebRTC
- *   gateway authenticates (the signaling offer's `authToken` and the ICE-servers fetch). Always a
- *   separate value from `Configuration.apiKey`, and always required for a voice call.
- * @property signalingHost Override the host of the selected [transport] — the WebRTC gateway, or the
- *   bridge when [transport] is [VoiceTransport.BRIDGE] (no scheme, e.g.
- *   `"webrtc-gateway.example.com"`). Required when using `Environment.Custom`,
- *   since the host can't be derived from a custom messaging endpoint. When null, the host is
- *   resolved from the configured environment.
- * @property transport Which WebRTC backend to place the call through. Defaults to
- *   [VoiceTransport.GATEWAY] — the shipped path.
+ * @property webrtcToken The connector's **WebRTC token** from Agent Studio — the Bearer credential
+ *   `webrtc-bridge` provisions a call against. Always a separate value from `Configuration.apiKey`,
+ *   and always required for a voice call.
+ * @property signalingHost Override the media host — the `webrtc-bridge` deployment a call is placed
+ *   through (no scheme, e.g. `"webrtc-bridge.example.com"`). Required when using
+ *   `Environment.Custom`, since the host can't be derived from a custom messaging endpoint. When
+ *   null, the host is resolved from the configured environment.
  * @property speakerphone The **fallback** route used when no headset/Bluetooth is connected: the
  *   loudspeaker (hands-free — the `true` default, natural for a voice agent) or the earpiece (`false`).
  *   A connected wired/Bluetooth headset is always preferred automatically; switch manually mid-call via
@@ -26,23 +23,16 @@ public class VoiceOptions @JvmOverloads constructor(
     @JvmField public val webrtcToken: String,
     @JvmField public val signalingHost: String? = null,
     @JvmField public val speakerphone: Boolean = true,
-    @JvmField public val transport: VoiceTransport = VoiceTransport.GATEWAY,
 ) {
     /** Java-friendly builder. The WebRTC token is required, so it's a constructor argument. */
     public class Builder(private val webrtcToken: String) {
         private var signalingHost: String? = null
         private var speakerphone: Boolean = true
-        private var transport: VoiceTransport = VoiceTransport.GATEWAY
 
         public fun signalingHost(value: String?): Builder = apply { signalingHost = value }
         public fun speakerphone(value: Boolean): Builder = apply { speakerphone = value }
-        public fun transport(value: VoiceTransport): Builder = apply { transport = value }
 
-        public fun build(): VoiceOptions = VoiceOptions(
-            webrtcToken = webrtcToken,
-            signalingHost = signalingHost,
-            speakerphone = speakerphone,
-            transport = transport,
-        )
+        public fun build(): VoiceOptions =
+            VoiceOptions(webrtcToken = webrtcToken, signalingHost = signalingHost, speakerphone = speakerphone)
     }
 }

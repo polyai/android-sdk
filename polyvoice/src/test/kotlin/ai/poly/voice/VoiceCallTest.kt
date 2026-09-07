@@ -5,7 +5,7 @@ package ai.poly.voice
 import ai.poly.messaging.Callback
 import ai.poly.messaging.PolyError
 import ai.poly.messaging.voice.CallState
-import ai.poly.voice.internal.services.CallCoordinator
+import ai.poly.voice.internal.services.BridgeCallCoordinator
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,23 +24,28 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class VoiceCallTest {
 
-    private class Harness(val call: VoiceCall, val sig: FakeSignalingTransport, val scope: CoroutineScope)
+    private class Harness(
+        val call: VoiceCall,
+        val sig: FakeEventsTransport,
+        val bridge: FakeBridgeApi,
+        val scope: CoroutineScope,
+    )
 
     private fun TestScope.harness(micPermission: Boolean): Harness {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-        val sig = FakeSignalingTransport()
-        val coordinator = CallCoordinator(
-            gatewayToken = "k",
+        val sig = FakeEventsTransport()
+        val bridge = FakeBridgeApi()
+        val coordinator = BridgeCallCoordinator(
+            bridgeToken = "k",
             restApi = FakeRestApi(),
+            bridge = bridge,
             sessionLink = FakeSessionLink(),
-            signaling = sig,
+            events = sig,
             webrtc = FakeWebRtcPeer(),
-            signalingUrl = "wss://t/signal",
             scope = scope,
             logger = NoopLogger,
-            newCallSid = { "cs" },
         )
-        return Harness(VoiceCall(coordinator, scope, permissionGranted = { micPermission }), sig, scope)
+        return Harness(VoiceCall(coordinator, scope, permissionGranted = { micPermission }), sig, bridge, scope)
     }
 
     @Test
@@ -49,7 +54,7 @@ class VoiceCallTest {
         val error = assertFailsWith<PolyError> { h.call.start() }
         assertTrue(error is PolyError.Voice.MediaFailed)
         assertTrue(h.call.getState() is CallState.Failed)
-        assertEquals(0, h.sig.sent.size) // pipeline never ran
+        assertEquals(0, h.bridge.provisionCount) // pipeline never ran
         h.scope.cancel()
     }
 
@@ -58,7 +63,8 @@ class VoiceCallTest {
         val h = harness(micPermission = true)
         h.call.start()
         assertEquals(CallState.Connecting, h.call.getState())
-        assertEquals(1, h.sig.sentOfType("offer").size)
+        // The offer goes to the bridge over HTTPS, not down a signalling socket.
+        assertEquals(1, h.bridge.sentOffers.size)
 
         h.call.end()
         assertEquals(CallState.Ended, h.call.getState())

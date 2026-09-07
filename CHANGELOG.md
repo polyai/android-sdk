@@ -6,27 +6,32 @@ is pre-1.0, breaking changes bump the **minor** version.
 
 ## [Unreleased]
 
-### Added
-- **`VoiceTransport`** — choose the WebRTC backend a call uses:
-  `VoiceOptions(webrtcToken = "…", transport = VoiceTransport.BRIDGE)` places the call over
-  `webrtc-bridge` instead of `webrtc-gateway` (MES-1658). `GATEWAY` remains the default, so
-  existing apps are unaffected.
-- Bridge call pipeline (`BridgeCallCoordinator`): provision over `POST /api/v1/call`, SDP over
-  HTTPS, a control socket for barge-in and agent-track re-pulls, and `DELETE /api/v1/call/{id}`
-  teardown. The messaging session links to the **bridge-minted** call id, so provision now runs
-  before the link on this path.
-- Five `WebRtcPeer` capabilities behind the bridge path: `awaitIceGathering(quietMs, capMs)`
-  (non-trickle gathering), `localDescriptionSdp()`, `audioMid()`, `acceptRemoteOffer(sdp)` (the
-  agent-track renegotiation) and `setRemoteAudioEnabled(enabled)` (barge-in).
-- `IceServer.BRIDGE_DEFAULT` — Cloudflare STUN, the fallback on the bridge path when the provision
-  response carries no `iceServers` (RUN-1780).
-
 ### Changed
-- `VoiceCall` now holds a `CallDriver` rather than a concrete `CallCoordinator`, so the same public
-  surface covers both backends.
-- `VoiceOptions` gained a `transport` parameter (defaulted, `@JvmOverloads`), so every existing Java
-  constructor signature still resolves. Kotlin callers relying on default arguments need a
-  recompile — the usual consequence of adding a defaulted parameter.
+- **Voice calls now run over `webrtc-bridge`** instead of `webrtc-gateway` (MES-1658). The gateway
+  path is gone, not deprecated — it no longer works.
+
+  **No code change is required, and the published API is byte-identical** (`apiCheck` against the
+  previous dump is clean): `PolyVoice.call`, `VoiceOptions`, `VoiceCall`, `CallState`, mute, audio
+  routing and every error case are unchanged, and a call still links to the same messaging session.
+  `start()` still returns with the call `Connecting`; observe `state` for `Connected` as before.
+
+  What moved underneath: the call is provisioned with `POST /api/v1/call` (the WebRTC token becomes
+  a Bearer credential), SDP travels over HTTPS non-trickle, the **bridge** mints the call id (so
+  provision now runs before the messaging link), a second negotiation starts the agent's audio, a
+  control socket carries barge-in and re-pull, and `DELETE /api/v1/call/{id}` replaces the close
+  frame.
+- `VoiceOptions.signalingHost` now overrides the **bridge** host rather than the gateway host. Same
+  parameter, same meaning ("point voice at this deployment"), new target.
+- `IceServer.DEFAULT` is now Cloudflare STUN (`stun.cloudflare.com`). Media terminates at
+  Cloudflare's edge on this path, so the old `stun.l.google.com` default went out with the gateway.
+
+### Removed
+- The gateway call pipeline: `CallCoordinator`, `SignalingProtocol`/`SignalMessage`, the gateway
+  host resolution in `VoiceHosts`, and `VoiceRestApi.fetchIceServers` (ICE servers now arrive in the
+  bridge's provision response). All internal.
+- Trickle-ICE members of the internal `WebRtcPeer` port (`addRemoteIceCandidate`, `PeerEvent.LocalIce`),
+  replaced by `awaitIceGathering`, `localDescriptionSdp`, `audioMid`, `acceptRemoteOffer` and
+  `setRemoteAudioEnabled`.
 
 ## [0.9.0] - 2026-06-30
 

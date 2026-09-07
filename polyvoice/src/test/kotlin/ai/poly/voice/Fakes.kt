@@ -11,7 +11,7 @@ import ai.poly.voice.internal.ports.AudioControl
 import ai.poly.voice.internal.ports.AudioInterruption
 import ai.poly.voice.internal.ports.PeerConnectionState
 import ai.poly.voice.internal.ports.PeerEvent
-import ai.poly.voice.internal.ports.SignalingTransport
+import ai.poly.voice.internal.ports.EventsTransport
 import ai.poly.voice.internal.ports.VoiceRestApi
 import ai.poly.voice.internal.ports.BridgeApi
 import ai.poly.voice.internal.ports.VoiceSessionLink
@@ -31,7 +31,6 @@ internal object NoopLogger : PolyLogger {
 internal class FakeRestApi(
     var token: String = "access-tok",
     var sessionId: String = "sess-1",
-    var iceServers: List<IceServer> = IceServer.DEFAULT,
     var failAt: String? = null,
 ) : VoiceRestApi {
     override suspend fun obtainAccessToken(): String {
@@ -44,7 +43,6 @@ internal class FakeRestApi(
         return sessionId
     }
 
-    override suspend fun fetchIceServers(token: String): List<IceServer> = iceServers
 }
 
 internal class FakeAudioControl : AudioControl {
@@ -87,7 +85,7 @@ internal class FakeSessionLink(var failOpen: Boolean = false) : VoiceSessionLink
     override fun close() { closed = true }
 }
 
-internal class FakeSignalingTransport : SignalingTransport {
+internal class FakeEventsTransport : EventsTransport {
     private val _incoming = MutableSharedFlow<String>(extraBufferCapacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val _closed = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     override val incoming: Flow<String> = _incoming
@@ -115,7 +113,7 @@ internal class FakeSignalingTransport : SignalingTransport {
 
     override fun close() { closeCount++; isOpen = false }
 
-    /** Push an inbound frame as if from the gateway. */
+    /** Push an inbound frame as if from the bridge. */
     fun deliver(frame: String) { _incoming.tryEmit(frame) }
 
     /** Simulate the socket dropping (closes it, then signals the unexpected close). */
@@ -135,14 +133,10 @@ internal class FakeWebRtcPeer(var offerSdp: String = "OFFER_SDP") : WebRtcPeer {
     var remoteAnswer: String? = null
     var micTrackEnabled = true
     var closeCount = 0
-    val addedRemoteIce = mutableListOf<Triple<String, String?, Int?>>()
 
     override suspend fun create(iceServers: List<IceServer>) { created = true; lastIceServers = iceServers }
     override suspend fun createOfferSdp(): String = offerSdp
     override suspend fun setRemoteAnswer(sdp: String) { remoteAnswer = sdp }
-    override fun addRemoteIceCandidate(candidate: String, sdpMid: String?, sdpMLineIndex: Int?) {
-        addedRemoteIce += Triple(candidate, sdpMid, sdpMLineIndex)
-    }
     override fun setMicEnabled(enabled: Boolean) { micTrackEnabled = enabled }
     override fun close() { closeCount++ }
 
@@ -169,10 +163,6 @@ internal class FakeWebRtcPeer(var offerSdp: String = "OFFER_SDP") : WebRtcPeer {
         return answerSdp
     }
     override fun setRemoteAudioEnabled(enabled: Boolean) { remoteAudioEnabledCalls += enabled }
-
-    fun emitLocalIce(candidate: String, sdpMid: String? = "0", sdpMLineIndex: Int? = 0) {
-        _events.tryEmit(PeerEvent.LocalIce(candidate, sdpMid, sdpMLineIndex))
-    }
 
     fun emitState(state: PeerConnectionState) { _events.tryEmit(PeerEvent.ConnectionState(state)) }
 }

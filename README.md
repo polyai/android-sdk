@@ -1799,7 +1799,7 @@ import ai.poly.voice.PolyVoice
 val call = PolyVoice.call(
     context,
     Configuration(apiKey = "YOUR_API_KEY"),          // connector token (X-Token)
-    VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"),  // WebRTC gateway token — distinct, also required
+    VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"),  // WebRTC token — distinct, also required
 )
 
 // Observe the lifecycle: Idle → Connecting → Connected → Ended / Failed.
@@ -1814,10 +1814,9 @@ call.setMuted(true)                      // in-call controls
 call.end()
 ```
 
-Calls run over PolyAI's `webrtc-gateway` by default. To place them over the newer **`webrtc-bridge`**
-instead, pass `VoiceOptions(webrtcToken = "…", transport = VoiceTransport.BRIDGE)` — everything else
-(state, mute, audio routing) is unchanged. See
-[Choosing a backend](polyvoice/README.md#choosing-a-backend-voicetransport).
+Calls are placed over PolyAI's **`webrtc-bridge`** (the older `webrtc-gateway` was retired in
+MES-1658). Nothing changes in your code — see
+[How a call connects](polyvoice/README.md#how-a-call-connects) for what moved underneath.
 
 `CallState`, `PolyError.Voice`, `Configuration`, and `Environment` are the same types from
 `ai.poly:messaging` — no new vocabulary. A call needs **two credentials, both required and distinct**,

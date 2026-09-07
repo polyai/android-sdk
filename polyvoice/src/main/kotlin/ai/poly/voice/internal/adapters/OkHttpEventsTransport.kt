@@ -7,7 +7,7 @@ import ai.poly.messaging.PolyLogger
 import ai.poly.voice.internal.log.d
 import ai.poly.voice.internal.log.i
 import ai.poly.voice.internal.log.w
-import ai.poly.voice.internal.ports.SignalingTransport
+import ai.poly.voice.internal.ports.EventsTransport
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -21,16 +21,16 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 
 /**
- * The WebRTC-gateway signaling WebSocket over OkHttp. `connect` suspends until the socket is open
+ * The WebRTC-bridge signaling WebSocket over OkHttp. `connect` suspends until the socket is open
  * (or fails/times out). Inbound frames flow on `incoming`; an unexpected close/failure emits on
  * `closed`. The transport itself holds a single connection — the coordinator drives reconnect (with
- * backoff) by calling `connect` again, since each gateway frame is routed by `sessionId`.
+ * backoff) by calling `connect` again, since each bridge frame is routed by `sessionId`.
  */
-internal class OkHttpSignalingTransport(
+internal class OkHttpEventsTransport(
     private val logger: PolyLogger,
     private val client: OkHttpClient = OkHttpClient(),
     private val connectTimeoutMs: Long = 10_000,
-) : SignalingTransport {
+) : EventsTransport {
 
     private val _incoming = MutableSharedFlow<String>(extraBufferCapacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val _closed = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)

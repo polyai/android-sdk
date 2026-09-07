@@ -24,8 +24,6 @@ internal interface VoiceRestApi {
     /** `POST /sessions` (Bearer) → session id. */
     suspend fun createSession(token: String): String
 
-    /** `GET /api/v1/ice-servers` on the gateway → STUN/TURN. Implementations fall back to STUN on failure. */
-    suspend fun fetchIceServers(token: String): List<IceServer>
 }
 
 /**
@@ -95,9 +93,9 @@ internal interface VoiceSessionLink {
     fun close()
 }
 
-/** The signaling WebSocket on the gateway (SDP + ICE exchange). */
-internal interface SignalingTransport {
-    /** Raw inbound text frames (decoded by `ai.poly.voice.internal.protocol.SignalingProtocol`). */
+/** The bridge's control (events) WebSocket: barge-in and agent-track re-pull. */
+internal interface EventsTransport {
+    /** Raw inbound text frames (decoded by `ai.poly.voice.internal.protocol.BridgeProtocol`). */
     val incoming: Flow<String>
 
     /** Emits when the socket closes unexpectedly (no auto-reconnect — the coordinator decides what to do). */
@@ -127,9 +125,6 @@ internal interface WebRtcPeer {
 
     /** Apply the remote SDP answer (`setRemoteDescription`). */
     suspend fun setRemoteAnswer(sdp: String)
-
-    /** Add a remote ICE candidate. The coordinator only calls this after the answer is applied. */
-    fun addRemoteIceCandidate(candidate: String, sdpMid: String?, sdpMLineIndex: Int?)
 
     /** Enable/disable the local mic track (mute). */
     fun setMicEnabled(enabled: Boolean)
@@ -200,9 +195,6 @@ internal interface BridgeApi {
 
 /** Events surfaced by `WebRtcPeer`. */
 internal sealed interface PeerEvent {
-    /** A locally gathered ICE candidate to trickle to the gateway. */
-    data class LocalIce(val candidate: String, val sdpMid: String?, val sdpMLineIndex: Int?) : PeerEvent
-
     /** Peer connection state changed. */
     data class ConnectionState(val state: PeerConnectionState) : PeerEvent
 

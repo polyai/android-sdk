@@ -52,7 +52,7 @@ internal object BridgeProtocol {
         val trackName: String?,
         /**
          * ICE servers the bridge wants this call to use. The dev deployment doesn't send these yet
-         * (RUN-1780), so callers fall back to [IceServer.BRIDGE_DEFAULT].
+         * (RUN-1780), so callers fall back to [IceServer.DEFAULT].
          */
         val iceServers: List<IceServer>,
         val eventsPath: String?,

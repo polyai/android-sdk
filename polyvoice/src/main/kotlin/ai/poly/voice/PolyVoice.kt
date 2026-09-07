@@ -9,12 +9,10 @@ import ai.poly.voice.internal.adapters.AndroidAudioControl
 import ai.poly.voice.internal.adapters.AndroidLogLogger
 import ai.poly.voice.internal.adapters.AndroidWebRtcPeer
 import ai.poly.voice.internal.adapters.OkHttpBridgeApi
-import ai.poly.voice.internal.adapters.OkHttpSignalingTransport
+import ai.poly.voice.internal.adapters.OkHttpEventsTransport
 import ai.poly.voice.internal.adapters.OkHttpVoiceRestApi
 import ai.poly.voice.internal.adapters.OkHttpVoiceSessionLink
 import ai.poly.voice.internal.services.BridgeCallCoordinator
-import ai.poly.voice.internal.services.CallCoordinator
-import ai.poly.voice.internal.services.CallDriver
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -61,17 +59,15 @@ public object PolyVoice {
         val logger = AndroidLogLogger(config.logLevel)
         val hosts = VoiceHosts(config.environment, options.signalingHost)
         val hostId = config.hostIdentifier ?: app.packageName
-        // Both backends authenticate with the connector's WebRTC token — always a distinct value
-        // from the API key. The gateway takes it inside the offer; the bridge takes it as a Bearer
-        // credential on provision.
-        val gatewayToken = options.webrtcToken
+        // The bridge authenticates provision with the connector's WebRTC token — always a distinct
+        // value from the API key.
+        val bridgeToken = options.webrtcToken
         // device_type mirrors the chat SDK's detection (smallestScreenWidthDp >= 600 ⇒ tablet) so voice
         // and chat report the same dimension on session create.
         val deviceType = if (app.resources.configuration.smallestScreenWidthDp >= 600) "tablet" else "mobile"
 
         val restApi = OkHttpVoiceRestApi(
             restBaseUrl = hosts.restBaseUrl(),
-            iceServersUrl = { token -> hosts.iceServersUrl(token) },
             apiKey = config.apiKey,
             hostIdentifier = hostId,
             deviceType = deviceType,
@@ -82,7 +78,7 @@ public object PolyVoice {
             wsUrl = { sessionId, token -> hosts.voiceSessionWsUrl(sessionId, token) },
             logger = logger,
         )
-        val signaling = OkHttpSignalingTransport(logger)
+        val events = OkHttpEventsTransport(logger)
         val webrtc = AndroidWebRtcPeer(app, logger)
         val audioControl = AndroidAudioControl(app, logger, useSpeakerphone = options.speakerphone)
 
@@ -90,37 +86,21 @@ public object PolyVoice {
         // this one thread, so its mutable state needs no locks.
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
 
-        val coordinator: CallDriver = when (options.transport) {
-            VoiceTransport.GATEWAY -> CallCoordinator(
-                gatewayToken = gatewayToken,
-                restApi = restApi,
-                sessionLink = sessionLink,
-                signaling = signaling,
-                webrtc = webrtc,
-                signalingUrl = hosts.signalingUrl(),
-                scope = scope,
+        val coordinator = BridgeCallCoordinator(
+            bridgeToken = bridgeToken,
+            restApi = restApi,
+            bridge = OkHttpBridgeApi(
+                baseUrl = hosts.bridgeBaseUrl(),
+                authToken = bridgeToken,
                 logger = logger,
-                audioControl = audioControl,
-            )
-
-            VoiceTransport.BRIDGE -> BridgeCallCoordinator(
-                bridgeToken = gatewayToken,
-                restApi = restApi,
-                bridge = OkHttpBridgeApi(
-                    baseUrl = hosts.bridgeBaseUrl(),
-                    authToken = gatewayToken,
-                    logger = logger,
-                ),
-                sessionLink = sessionLink,
-                // The events socket reuses the gateway's transport: same OkHttp WebSocket
-                // lifecycle, different framing on top.
-                events = signaling,
-                webrtc = webrtc,
-                scope = scope,
-                logger = logger,
-                audioControl = audioControl,
-            )
-        }
+            ),
+            sessionLink = sessionLink,
+            events = events,
+            webrtc = webrtc,
+            scope = scope,
+            logger = logger,
+            audioControl = audioControl,
+        )
 
         return VoiceCall(
             coordinator = coordinator,

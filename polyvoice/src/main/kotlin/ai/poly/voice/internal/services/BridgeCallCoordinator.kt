@@ -17,7 +17,7 @@ import ai.poly.voice.internal.ports.AudioInterruption
 import ai.poly.voice.internal.ports.BridgeApi
 import ai.poly.voice.internal.ports.PeerConnectionState
 import ai.poly.voice.internal.ports.PeerEvent
-import ai.poly.voice.internal.ports.SignalingTransport
+import ai.poly.voice.internal.ports.EventsTransport
 import ai.poly.voice.internal.ports.VoiceRestApi
 import ai.poly.voice.internal.ports.VoiceSessionLink
 import ai.poly.voice.internal.ports.WebRtcPeer
@@ -35,10 +35,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The call state machine for `webrtc-bridge` (RUN-1279) — the sibling of [CallCoordinator], which
- * drives `webrtc-gateway`.
+ * The call state machine for `webrtc-bridge` (RUN-1279 / MES-1658) — the one and only call pipeline
+ * since the `webrtc-gateway` path was removed.
  *
- * The difference isn't the transport alone; the shape of the handshake changes:
+ * For anyone reading this alongside the old gateway code, the difference isn't the transport alone;
+ * the shape of the handshake changed:
  *
  * | | gateway | bridge |
  * |---|---|---|
@@ -50,7 +51,7 @@ import kotlinx.coroutines.withContext
  * Pipeline: auth → session → **provision** → link → offer (gathered, over HTTPS) → media connects →
  * pull the agent track → events socket.
  *
- * Like its sibling, every collaborator is a port, so the whole machine runs on the JVM with fakes,
+ * Every collaborator is a port, so the whole machine runs on the JVM with fakes,
  * and all state is confined to [scope]'s single-threaded dispatcher — the plain `var`s need no locks.
  */
 internal class BridgeCallCoordinator(
@@ -59,7 +60,7 @@ internal class BridgeCallCoordinator(
     private val restApi: VoiceRestApi,
     private val bridge: BridgeApi,
     private val sessionLink: VoiceSessionLink,
-    private val events: SignalingTransport,
+    private val events: EventsTransport,
     private val webrtc: WebRtcPeer,
     private val scope: CoroutineScope,
     private val logger: PolyLogger,
@@ -68,10 +69,10 @@ internal class BridgeCallCoordinator(
     private val disconnectGraceMs: Long = 5_000,
     private val iceQuietMs: Long = 200,
     private val iceCapMs: Long = 2_000,
-) : CallDriver {
+) {
 
     private val _state = MutableStateFlow<CallState>(CallState.Idle)
-    override val state: StateFlow<CallState> = _state.asStateFlow()
+    val state: StateFlow<CallState> = _state.asStateFlow()
 
     private var active = false
     private var callAttempt = 0
@@ -88,7 +89,7 @@ internal class BridgeCallCoordinator(
     private var lastPeerState: PeerConnectionState? = null
     private var mediaConnected: CompletableDeferred<Unit>? = null
 
-    override suspend fun start(): Unit = withContext(scope.coroutineContext) {
+    suspend fun start(): Unit = withContext(scope.coroutineContext) {
         if (active) {
             logger.d("[voice] start() ignored — a call is already active")
             return@withContext
@@ -112,7 +113,7 @@ internal class BridgeCallCoordinator(
         }
     }
 
-    override fun failPreflight(error: PolyError) {
+    fun failPreflight(error: PolyError) {
         _state.value = CallState.Failed(error)
     }
 
@@ -152,7 +153,7 @@ internal class BridgeCallCoordinator(
             sessionLink.open(token, sessionId, call.callId)
             if (stale()) { sessionLink.close(); ready.complete(Unit); return }
 
-            val iceServers = call.credentials.iceServers.ifEmpty { IceServer.BRIDGE_DEFAULT }
+            val iceServers = call.credentials.iceServers.ifEmpty { IceServer.DEFAULT }
             webrtc.create(iceServers)
             if (stale()) { ready.complete(Unit); return }
 
@@ -172,17 +173,19 @@ internal class BridgeCallCoordinator(
             webrtc.setRemoteAnswer(answer)
             logger.i("[voice] bridge answer applied — waiting for media")
 
-            // The SFU rejects the agent-track pull until the peer connection is up, so this wait is
-            // part of the handshake, not just an observation.
+            // `start()` returns here, with the call `Connecting`, exactly as it did on the gateway:
+            // the caller watches `state` for `Connected`. What follows needs a connected peer (the
+            // SFU rejects the agent-track pull before that), so it runs on for the caller.
+            ready.complete(Unit)
+
             awaitMediaConnected()
-            if (stale()) { ready.complete(Unit); return }
+            if (stale()) return
 
             pullAgentTrack(call)
-            if (stale()) { ready.complete(Unit); return }
+            if (stale()) return
 
             openEventsSocket(call)
             logger.i("[voice] bridge call negotiated")
-            ready.complete(Unit)
         } catch (c: CancellationException) {
             ready.completeExceptionally(c)
             throw c
@@ -261,8 +264,6 @@ internal class BridgeCallCoordinator(
     private fun onPeerEvent(event: PeerEvent) {
         if (!active) return
         when (event) {
-            // The bridge has no candidate channel: local candidates land in the SDP instead.
-            is PeerEvent.LocalIce -> Unit
             is PeerEvent.ConnectionState -> onPeerConnectionState(event.state)
             PeerEvent.Track -> Unit
         }
@@ -317,26 +318,26 @@ internal class BridgeCallCoordinator(
 
     // ── public control ────────────────────────────────────────────
 
-    override fun endCall() {
+    fun endCall() {
         val wasFailed = _state.value is CallState.Failed
         cleanup()
         if (!wasFailed) _state.value = CallState.Ended
     }
 
-    override fun dispose() {
+    fun dispose() {
         scope.launch { endCall() }.invokeOnCompletion { scope.cancel() }
     }
 
-    override fun setMuted(value: Boolean) {
+    fun setMuted(value: Boolean) {
         muted = value
         applyMicState()
     }
 
-    override fun isMuted(): Boolean = muted
+    fun isMuted(): Boolean = muted
 
-    override val audio: StateFlow<AudioState> get() = audioControl.audio
+    val audio: StateFlow<AudioState> get() = audioControl.audio
 
-    override fun selectAudioDevice(device: AudioDevice?) = audioControl.selectAudioDevice(device)
+    fun selectAudioDevice(device: AudioDevice?) = audioControl.selectAudioDevice(device)
 
     private fun applyMicState() {
         if (active) webrtc.setMicEnabled(!muted && !interruptionMuted)
@@ -358,7 +359,10 @@ internal class BridgeCallCoordinator(
         collectors.forEach { it.cancel() }
         collectors.clear()
         // Release anything waiting on media so a teardown mid-handshake can't strand the pipeline.
-        mediaConnected?.cancel()
+        // Completed, not cancelled: the waiter is a plain `await()` in the pipeline, and a
+        // cancellation there would propagate out as a JobCancellationException rather than the
+        // staleness check the pipeline already handles.
+        mediaConnected?.complete(Unit)
         mediaConnected = null
         runCatching { webrtc.close() }
         runCatching { events.close() }

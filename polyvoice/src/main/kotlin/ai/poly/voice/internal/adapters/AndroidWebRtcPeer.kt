@@ -149,11 +149,6 @@ internal class AndroidWebRtcPeer(
         }
     }
 
-    override fun addRemoteIceCandidate(candidate: String, sdpMid: String?, sdpMLineIndex: Int?) {
-        if (closed) return
-        peerConnection?.addIceCandidate(IceCandidate(sdpMid ?: "", sdpMLineIndex ?: 0, candidate))
-    }
-
     override fun setMicEnabled(enabled: Boolean) {
         localAudioTrack?.setEnabled(enabled)
     }
@@ -277,9 +272,12 @@ internal class AndroidWebRtcPeer(
     }
 
     private val observer = object : PeerConnection.Observer {
+        /**
+         * Candidates are never trickled — the bridge's SDP proxy has no channel for them. They are
+         * only counted here, so [awaitIceGathering] can tell when the stream has gone quiet and the
+         * local description is complete enough to send.
+         */
         override fun onIceCandidate(candidate: IceCandidate) {
-            // Bookkeeping for the bridge's non-trickle gather wait. The gateway path ignores it; it
-            // costs one map write per candidate.
             val key = candidate.sdp.ufragValue() ?: currentIceUfrag() ?: ""
             if (candidate.sdp.isEmpty()) {
                 gatheringDone += key
@@ -287,7 +285,6 @@ internal class AndroidWebRtcPeer(
                 candidateCounts[key] = (candidateCounts[key] ?: 0) + 1
                 lastCandidateAt[key] = System.currentTimeMillis()
             }
-            _events.tryEmit(PeerEvent.LocalIce(candidate.sdp, candidate.sdpMid, candidate.sdpMLineIndex))
         }
 
         override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) {
