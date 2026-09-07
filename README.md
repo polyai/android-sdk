@@ -1814,11 +1814,16 @@ call.setMuted(true)                      // in-call controls
 call.end()
 ```
 
+Calls run over PolyAI's `webrtc-gateway` by default. To place them over the newer **`webrtc-bridge`**
+instead, pass `VoiceOptions(webrtcToken = "…", transport = VoiceTransport.BRIDGE)` — everything else
+(state, mute, audio routing) is unchanged. See
+[Choosing a backend](polyvoice/README.md#choosing-a-backend-voicetransport).
+
 `CallState`, `PolyError.Voice`, `Configuration`, and `Environment` are the same types from
 `ai.poly:messaging` — no new vocabulary. A call needs **two credentials, both required and distinct**,
 from [Agent Studio](https://studio.poly.ai) › Connector Settings: the **API key** (`Configuration.apiKey`,
 authenticates the connector) and the **WebRTC token** (`VoiceOptions.webrtcToken`, authenticates the media
-gateway). It also needs the **`RECORD_AUDIO`** runtime permission — the SDK declares it; you request the
+backend). It also needs the **`RECORD_AUDIO`** runtime permission — the SDK declares it; you request the
 grant before `start()`.
 
 📖 **Full voice guide → [`polyvoice/README.md`](polyvoice/README.md)** — permissions, audio-output routing

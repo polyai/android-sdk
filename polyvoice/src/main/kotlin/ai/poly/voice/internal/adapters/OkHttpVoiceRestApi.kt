@@ -99,28 +99,8 @@ internal class OkHttpVoiceRestApi(
         }
     }
 
-    private fun parseIceServers(body: String): List<IceServer> {
-        val arr = runCatching { JSONObject(body).optJSONArray("iceServers") }.getOrNull() ?: return emptyList()
-        val out = ArrayList<IceServer>(arr.length())
-        for (i in 0 until arr.length()) {
-            val obj = arr.optJSONObject(i) ?: continue
-            val urls = when {
-                obj.optJSONArray("urls") != null -> {
-                    val u = obj.getJSONArray("urls")
-                    (0 until u.length()).mapNotNull { u.optString(it).takeIf { s -> s.isNotEmpty() } }
-                }
-                obj.optString("urls").isNotEmpty() -> listOf(obj.getString("urls"))
-                else -> emptyList()
-            }
-            if (urls.isEmpty()) continue
-            out += IceServer(
-                urls = urls,
-                username = obj.optString("username").takeIf { it.isNotEmpty() },
-                credential = obj.optString("credential").takeIf { it.isNotEmpty() },
-            )
-        }
-        return out
-    }
+    private fun parseIceServers(body: String): List<IceServer> =
+        IceServer.parseList(runCatching { JSONObject(body).optJSONArray("iceServers") }.getOrNull())
 
     private data class Http(val code: Int, val body: String)
 

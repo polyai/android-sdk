@@ -90,7 +90,7 @@ Connector Settings** (the same connector you use for chat):
 | Value | What it is | Required? | Sent as |
 |---|---|---|---|
 | **API key** — `Configuration.apiKey` | your **connector token** | **Yes** | `X-Token` (authenticates the call) |
-| **WebRTC token** — `VoiceOptions.webrtcToken` | the **gateway auth token** for the media connection — a **distinct** token from the API key | **Yes** | the offer `authToken` + ICE-servers fetch |
+| **WebRTC token** — `VoiceOptions.webrtcToken` | the **auth token** for the media connection — a **distinct** token from the API key | **Yes** | the offer `authToken` (gateway) or `Authorization: Bearer` (bridge) |
 
 ```kotlin
 PolyVoice.call(
@@ -115,6 +115,42 @@ Two more values have sensible defaults, so **most apps don't set them** — but 
 - **`hostIdentifier`** (sent as `X-Host`) defaults to your **app's package name** (`applicationId`).
   Override it only if your connector is registered against a specific host in Agent Studio:
   `Configuration(apiKey = "…", hostIdentifier = "https://your-site.com")`.
+
+## Choosing a backend (`VoiceTransport`)
+
+PolyAI is migrating voice from **`webrtc-gateway`** to **`webrtc-bridge`**. The SDK ships both, and
+`VoiceOptions.transport` picks one:
+
+```kotlin
+VoiceOptions(webrtcToken = "…")                                          // GATEWAY — the default
+VoiceOptions(webrtcToken = "…", transport = VoiceTransport.BRIDGE)       // webrtc-bridge
+```
+
+`GATEWAY` stays the default while the bridge finishes its production rollout, so **you don't have to
+do anything**. Opt into `BRIDGE` to test against it early.
+
+What actually changes, in case you're debugging a call:
+
+| | `GATEWAY` | `BRIDGE` |
+|---|---|---|
+| Call setup | one signalling WebSocket | `POST /api/v1/call`, then SDP over HTTPS |
+| Credential | token inside the SDP offer | `Authorization: Bearer` on provision |
+| Call id | minted by this SDK | minted by the bridge (`call-<8 hex>`) |
+| ICE | trickled after the offer | gathered **before** the offer is sent |
+| Agent audio | arrives on the first answer | a second negotiation after connect |
+| Media terminates at | PolyAI's gateway | Cloudflare's edge |
+| STUN fallback | `stun.l.google.com` | `stun.cloudflare.com` |
+
+Everything above the transport is identical: the same `VoiceCall`, `CallState`, mute, audio routing
+and errors. A call placed on either backend links to the same messaging session, so the agent
+transcript is unchanged.
+
+> **Note:** the backend is compiled into your app, so switching is an **SDK version bump plus a Play
+> release** — there is no server-side flag that can move a shipped app. Plan the migration as a
+> release, not a config change.
+
+> **Custom / self-hosted:** `VoiceOptions.signalingHost` overrides the host of whichever transport is
+> selected (required with `Environment.Custom`).
 
 ## Audio output (speaker / earpiece / headset / Bluetooth)
 

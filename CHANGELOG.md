@@ -6,6 +6,28 @@ is pre-1.0, breaking changes bump the **minor** version.
 
 ## [Unreleased]
 
+### Added
+- **`VoiceTransport`** — choose the WebRTC backend a call uses:
+  `VoiceOptions(webrtcToken = "…", transport = VoiceTransport.BRIDGE)` places the call over
+  `webrtc-bridge` instead of `webrtc-gateway` (MES-1658). `GATEWAY` remains the default, so
+  existing apps are unaffected.
+- Bridge call pipeline (`BridgeCallCoordinator`): provision over `POST /api/v1/call`, SDP over
+  HTTPS, a control socket for barge-in and agent-track re-pulls, and `DELETE /api/v1/call/{id}`
+  teardown. The messaging session links to the **bridge-minted** call id, so provision now runs
+  before the link on this path.
+- Five `WebRtcPeer` capabilities behind the bridge path: `awaitIceGathering(quietMs, capMs)`
+  (non-trickle gathering), `localDescriptionSdp()`, `audioMid()`, `acceptRemoteOffer(sdp)` (the
+  agent-track renegotiation) and `setRemoteAudioEnabled(enabled)` (barge-in).
+- `IceServer.BRIDGE_DEFAULT` — Cloudflare STUN, the fallback on the bridge path when the provision
+  response carries no `iceServers` (RUN-1780).
+
+### Changed
+- `VoiceCall` now holds a `CallDriver` rather than a concrete `CallCoordinator`, so the same public
+  surface covers both backends.
+- `VoiceOptions` gained a `transport` parameter (defaulted, `@JvmOverloads`), so every existing Java
+  constructor signature still resolves. Kotlin callers relying on default arguments need a
+  recompile — the usual consequence of adding a defaulted parameter.
+
 ## [0.9.0] - 2026-06-30
 
 Adds the `ai.poly:voice` WebRTC voice-calling SDK (first publish) alongside `ai.poly:messaging:0.9.0`.

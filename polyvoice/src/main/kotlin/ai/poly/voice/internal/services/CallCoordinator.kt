@@ -61,9 +61,9 @@ internal class CallCoordinator(
     private val disconnectGraceMs: Long = 5_000,
     private val maxSignalingReconnects: Int = 3,
     private val signalingReconnectBaseMs: Long = 1_000,
-) {
+) : CallDriver {
     private val _state = MutableStateFlow<CallState>(CallState.Idle)
-    val state: StateFlow<CallState> = _state.asStateFlow()
+    override val state: StateFlow<CallState> = _state.asStateFlow()
 
     // ── lifecycle / staleness ──────────────────────────────────────
     private var active = false
@@ -90,7 +90,7 @@ internal class CallCoordinator(
      * setup fails (auth, session, signaling connect) — the failure is also reflected in `state`.
      * A no-op if a call is already in progress.
      */
-    suspend fun start(): Unit = withContext(scope.coroutineContext) {
+    override suspend fun start(): Unit = withContext(scope.coroutineContext) {
         if (active) {
             logger.d("[voice] start() ignored — a call is already active")
             return@withContext
@@ -117,7 +117,7 @@ internal class CallCoordinator(
     }
 
     /** Reflect a pre-flight failure (e.g. mic permission denied) in `state` without starting. */
-    fun failPreflight(error: PolyError) {
+    override fun failPreflight(error: PolyError) {
         _state.value = CallState.Failed(error)
     }
 
@@ -356,7 +356,7 @@ internal class CallCoordinator(
     // ── public control (called on [scope] from VoiceCall) ──────────
 
     /** End the call cleanly. Preserves a prior failure (doesn't overwrite `CallState.Failed` with Ended). */
-    fun endCall() {
+    override fun endCall() {
         val wasFailed = _state.value is CallState.Failed
         cleanup() // sends the graceful close frame
         if (!wasFailed) _state.value = CallState.Ended
@@ -366,16 +366,16 @@ internal class CallCoordinator(
      * Terminal disposal: end the call gracefully (on the confined scope), then cancel the per-call
      * `scope` so its `SupervisorJob` doesn't outlive the call. After this the call can't be restarted.
      */
-    fun dispose() {
+    override fun dispose() {
         scope.launch { endCall() }.invokeOnCompletion { scope.cancel() }
     }
 
-    fun setMuted(value: Boolean) {
+    override fun setMuted(value: Boolean) {
         muted = value
         applyMicState()
     }
 
-    fun isMuted(): Boolean = muted
+    override fun isMuted(): Boolean = muted
 
     /**
      * The mic is live only when the user hasn't muted AND we aren't in a transient audio-focus loss —
@@ -387,10 +387,10 @@ internal class CallCoordinator(
     }
 
     /** Live audio-routing snapshot (available outputs + the active one). */
-    val audio: StateFlow<AudioState> get() = audioControl.audio
+    override val audio: StateFlow<AudioState> get() = audioControl.audio
 
     /** Switch the live call's audio output; null reverts to automatic routing. */
-    fun selectAudioDevice(device: AudioDevice?) = audioControl.selectAudioDevice(device)
+    override fun selectAudioDevice(device: AudioDevice?) = audioControl.selectAudioDevice(device)
 
     private fun failCall(error: PolyError) {
         if (!active && _state.value is CallState.Failed) return // already failed; don't churn

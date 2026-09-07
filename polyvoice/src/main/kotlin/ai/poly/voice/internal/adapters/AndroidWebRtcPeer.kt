@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.webrtc.AudioSource
 import org.webrtc.AudioTrack
@@ -62,6 +63,17 @@ internal class AndroidWebRtcPeer(
     // (no touching a disposed peer/track).
     @Volatile private var closed = false
 
+    // Non-trickle gather bookkeeping for the bridge path, keyed by ICE generation (the candidate's
+    // own ufrag). A renegotiation shares one transport with the offer under BUNDLE, so its wait must
+    // not be ended by the previous generation's candidates — and a retired generation's candidate
+    // can still be delivered after the new local description is installed.
+    private val candidateCounts = java.util.concurrent.ConcurrentHashMap<String, Int>()
+    private val lastCandidateAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val gatheringDone = java.util.Collections.newSetFromMap(java.util.concurrent.ConcurrentHashMap<String, Boolean>())
+
+    /** Barge-in intent, applied to the agent track whenever a (re-)pull delivers one. */
+    @Volatile private var remoteAudioEnabled = true
+
     // Serialises the closed-flag flip in close() against the check-then-native-call in onAddTrack so a
     // remote track arriving during teardown can't call into a half-disposed engine. Held only around
     // the flag + the native setEnabled, never across dispose() — holding it across libwebrtc's
@@ -70,6 +82,10 @@ internal class AndroidWebRtcPeer(
 
     override suspend fun create(iceServers: List<IceServer>) {
         closed = false
+        candidateCounts.clear()
+        lastCandidateAt.clear()
+        gatheringDone.clear()
+        remoteAudioEnabled = true
         ensureFactoryInitialized()
         val adm = JavaAudioDeviceModule.builder(context).createAudioDeviceModule().also { audioDeviceModule = it }
         val factory = PeerConnectionFactory.builder()
@@ -142,6 +158,103 @@ internal class AndroidWebRtcPeer(
         localAudioTrack?.setEnabled(enabled)
     }
 
+    // ── webrtc-bridge capabilities ────────────────────────────────
+
+    /**
+     * Wait for ICE gathering to settle before the offer is POSTed.
+     *
+     * Deliberately not `iceGatheringState == COMPLETE`: a STUN transaction that never terminates
+     * pins that state at GATHERING and suppresses the end-of-candidates event with it, so on some
+     * networks neither of libwebrtc's "done" signals ever arrives. A quiet candidate stream is the
+     * real signal; [capMs] is only a backstop. The quiet window arms only once a candidate exists,
+     * so a gather producing nothing falls through to the cap rather than returning an empty SDP.
+     */
+    override suspend fun awaitIceGathering(quietMs: Long, capMs: Long) {
+        val deadline = System.currentTimeMillis() + capMs
+        while (System.currentTimeMillis() < deadline) {
+            if (closed) return
+            val key = currentIceUfrag() ?: ""
+            if (key in gatheringDone) return
+            if (peerConnection?.iceGatheringState() == PeerConnection.IceGatheringState.COMPLETE) return
+            val count = candidateCounts[key] ?: 0
+            val last = lastCandidateAt[key]
+            if (count > 0 && last != null && System.currentTimeMillis() - last >= quietMs) return
+            delay(GATHER_POLL_MS)
+        }
+    }
+
+    override fun localDescriptionSdp(): String? = peerConnection?.localDescription?.description
+
+    /** The mid of the transceiver carrying the microphone track. */
+    override fun audioMid(): String? {
+        val pc = peerConnection ?: return null
+        val trackId = localAudioTrack?.id() ?: return null
+        return runCatching {
+            pc.transceivers.firstOrNull { it.sender?.track()?.id() == trackId }?.mid
+        }.getOrNull()
+    }
+
+    /**
+     * Apply the bridge's renegotiation offer (which adds the agent's recvonly m-line) and return the
+     * answer.
+     */
+    override suspend fun acceptRemoteOffer(sdp: String): String {
+        val pc = peerConnection ?: throw PolyError.Voice.MediaFailed("peer connection not created")
+        suspendCancellableCoroutine { cont ->
+            pc.setRemoteDescription(
+                object : NoopSdpObserver() {
+                    override fun onSetSuccess() { cont.resume(Unit) }
+                    override fun onSetFailure(error: String?) {
+                        cont.resumeWithException(PolyError.Voice.MediaFailed("setRemoteDescription (offer) failed: ${error.orEmpty()}"))
+                    }
+                },
+                SessionDescription(SessionDescription.Type.OFFER, sdp),
+            )
+        }
+        val answer = suspendCancellableCoroutine { cont ->
+            pc.createAnswer(
+                object : NoopSdpObserver() {
+                    override fun onCreateSuccess(desc: SessionDescription) { cont.resume(desc) }
+                    override fun onCreateFailure(error: String?) {
+                        cont.resumeWithException(PolyError.Voice.MediaFailed("createAnswer failed: ${error.orEmpty()}"))
+                    }
+                },
+                MediaConstraints(),
+            )
+        }
+        suspendCancellableCoroutine { cont ->
+            pc.setLocalDescription(
+                object : NoopSdpObserver() {
+                    override fun onSetSuccess() { cont.resume(Unit) }
+                    override fun onSetFailure(error: String?) {
+                        cont.resumeWithException(PolyError.Voice.MediaFailed("setLocalDescription (answer) failed: ${error.orEmpty()}"))
+                    }
+                },
+                answer,
+            )
+        }
+        return answer.description
+    }
+
+    /**
+     * Barge-in: the SFU and jitter buffer already hold agent audio this client cannot drop, so the
+     * received track is silenced the moment the bridge says so.
+     */
+    override fun setRemoteAudioEnabled(enabled: Boolean) {
+        remoteAudioEnabled = enabled
+        synchronized(trackLock) {
+            if (closed) return
+            remoteAudioTrack?.setEnabled(enabled)
+        }
+    }
+
+    private fun currentIceUfrag(): String? =
+        peerConnection?.localDescription?.description
+            ?.lineSequence()
+            ?.firstOrNull { it.startsWith("a=ice-ufrag:") }
+            ?.removePrefix("a=ice-ufrag:")
+            ?.trim()
+
     override fun close() {
         // Flip the flag under the lock so any in-flight onAddTrack finishes its native setEnabled
         // before we start disposing — then release the lock and dispose without holding it.
@@ -165,6 +278,15 @@ internal class AndroidWebRtcPeer(
 
     private val observer = object : PeerConnection.Observer {
         override fun onIceCandidate(candidate: IceCandidate) {
+            // Bookkeeping for the bridge's non-trickle gather wait. The gateway path ignores it; it
+            // costs one map write per candidate.
+            val key = candidate.sdp.ufragValue() ?: currentIceUfrag() ?: ""
+            if (candidate.sdp.isEmpty()) {
+                gatheringDone += key
+            } else {
+                candidateCounts[key] = (candidateCounts[key] ?: 0) + 1
+                lastCandidateAt[key] = System.currentTimeMillis()
+            }
             _events.tryEmit(PeerEvent.LocalIce(candidate.sdp, candidate.sdpMid, candidate.sdpMLineIndex))
         }
 
@@ -178,7 +300,10 @@ internal class AndroidWebRtcPeer(
             synchronized(trackLock) {
                 if (closed) return // ignore a track arriving after teardown (don't touch a disposed factory)
                 remoteAudioTrack = track
-                track.setEnabled(true) // remote audio plays through the AudioDeviceModule
+                // Remote audio plays through the AudioDeviceModule. A re-pull can deliver a track
+                // while a barge-in mute is in force, so it inherits the current intent rather than
+                // unconditionally unmuting.
+                track.setEnabled(remoteAudioEnabled)
             }
             _events.tryEmit(PeerEvent.Track)
         }
@@ -195,6 +320,14 @@ internal class AndroidWebRtcPeer(
         override fun onRenegotiationNeeded() {}
         override fun onTrack(transceiver: RtpTransceiver) {}
     }
+
+    /**
+     * Extract `ufrag` from a candidate's SDP attribute line — what keys the gather bookkeeping to an
+     * ICE generation. The local description alone isn't a safe key: a candidate from a retired
+     * generation can still arrive after a renegotiation installs a new one.
+     */
+    private fun String.ufragValue(): String? =
+        substringAfter("ufrag ", "").substringBefore(' ').takeIf { it.isNotEmpty() }
 
     private fun ensureFactoryInitialized() {
         if (factoryInitialized.compareAndSet(false, true)) {
@@ -232,6 +365,8 @@ internal class AndroidWebRtcPeer(
     }
 
     private companion object {
+        /** Poll interval for the non-trickle gather wait (bridge path). */
+        const val GATHER_POLL_MS = 25L
         const val LOCAL_AUDIO_TRACK_ID = "poly_audio_0"
         const val LOCAL_STREAM_ID = "poly_stream_0"
         val factoryInitialized = AtomicBoolean(false)

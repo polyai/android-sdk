@@ -35,6 +35,33 @@ internal class VoiceHosts(
     }
 
     /** Gateway signaling WS, e.g. `wss://webrtc-gateway.us-1.platform.polyai.app/api/v1/webrtc/signal`. */
+    /**
+     * `webrtc-bridge` base, e.g. `https://webrtc-bridge.dev.polyai.app/`. Every credentials path the
+     * bridge returns resolves against this, so it keeps its trailing slash.
+     *
+     * Host rules come from the bridge's own gitops overlays and don't quite match the gateway's:
+     * `dev` is standalone, `plg-us-1-prod` sits directly under `polyai.app`, and every other cluster
+     * is under `.platform`.
+     */
+    fun bridgeBaseUrl(): String = "https://${bridgeHost()}/"
+
+    private fun bridgeHost(): String {
+        signalingHost?.takeIf { it.isNotBlank() }?.let { return it.trim() }
+        return when (environment) {
+            is Environment.US -> "webrtc-bridge.us-1.platform.polyai.app"
+            is Environment.UK -> "webrtc-bridge.uk-1.platform.polyai.app"
+            is Environment.EUW -> "webrtc-bridge.euw-1.platform.polyai.app"
+            is Environment.Cluster -> when (environment.name) {
+                "dev" -> "webrtc-bridge.dev.polyai.app"
+                "plg-us-1-prod" -> "webrtc-bridge.plg-us-1-prod.polyai.app"
+                else -> "webrtc-bridge.${environment.name}.platform.polyai.app"
+            }
+            is Environment.Custom -> throw PolyError.InvalidConfiguration(
+                "Environment.Custom has no known webrtc-bridge — set VoiceOptions.signalingHost.",
+            )
+        }
+    }
+
     fun signalingUrl(): String = "wss://${gatewayHost()}$SIGNAL_PATH"
 
     /** Gateway ICE-servers endpoint with the access token attached. */
