@@ -25,8 +25,7 @@ internal data class IceServer(
         val DEFAULT: List<IceServer> = listOf(IceServer(urls = listOf("stun:stun.cloudflare.com:3478")))
 
         /**
-         * Parse an `iceServers` array. Shared by the gateway's dedicated endpoint and the bridge,
-         * which carries the same objects inline in its provision response.
+         * Parse an `iceServers` array as the bridge sends it, inline in the provision response.
          */
         fun parseList(arr: JSONArray?): List<IceServer> {
             if (arr == null) return emptyList()

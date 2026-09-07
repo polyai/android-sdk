@@ -133,8 +133,8 @@ internal interface WebRtcPeer {
 
     // ── webrtc-bridge capabilities ────────────────────────────────
     //
-    // The bridge is non-trickle and renegotiates to start agent audio, so it needs four things the
-    // gateway path never asked for.
+    // The bridge is non-trickle and renegotiates to start agent audio, so a peer has to expose
+    // more than the offer/answer pair the retired gateway path needed.
 
     /**
      * Wait until ICE gathering has settled, so the offer POSTed to the bridge already carries its

@@ -34,12 +34,11 @@ internal class VoiceHosts(
         return "$base?session_id=$sessionId&auth_token=$token"
     }
 
-    /** Gateway signaling WS, e.g. `wss://webrtc-gateway.us-1.platform.polyai.app/api/v1/webrtc/signal`. */
     /**
      * `webrtc-bridge` base, e.g. `https://webrtc-bridge.dev.polyai.app/`. Every credentials path the
      * bridge returns resolves against this, so it keeps its trailing slash.
      *
-     * Host rules come from the bridge's own gitops overlays and don't quite match the gateway's:
+     * Host rules come from the bridge's own gitops overlays:
      * `dev` is standalone, `plg-us-1-prod` sits directly under `polyai.app`, and every other cluster
      * is under `.platform`.
      */

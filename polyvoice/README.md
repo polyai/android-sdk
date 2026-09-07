@@ -235,9 +235,9 @@ automatically) that keep `org.webrtc.**` — libwebrtc is reached by name over J
 R8 can't see, so stripping it would crash the audio engine. If you maintain a global `proguard-rules.pro`
 that's unusually aggressive, the shipped consumer rules still protect the SDK; you don't add anything.
 
-> **Custom / self-hosted gateway.** The WebRTC gateway host is derived from your `Environment`. If you
-> run a dev or self-hosted gateway, set `VoiceOptions.signalingHost` (no scheme, e.g.
-> `"webrtc-gateway.example.com"`) — it's **required** with `Environment.Custom`, since the gateway
+> **Custom / self-hosted bridge.** The `webrtc-bridge` host is derived from your `Environment`. If you
+> run a dev or self-hosted bridge, set `VoiceOptions.signalingHost` (no scheme, e.g.
+> `"webrtc-bridge.example.com"`) — it's **required** with `Environment.Custom`, since the bridge
 > host can't be derived from a custom messaging endpoint.
 
 ---

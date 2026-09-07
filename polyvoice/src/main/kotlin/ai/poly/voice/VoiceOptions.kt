@@ -4,7 +4,7 @@ package ai.poly.voice
 
 /**
  * Options for `PolyVoice.call`. [webrtcToken] is **required** — every voice call needs the WebRTC
- * gateway token, which is a distinct value from the API key. The rest are dev / self-hosted overrides
+ * token, which is a distinct value from the API key. The rest are dev / self-hosted overrides
  * with working defaults for the standard regions.
  *
  * @property webrtcToken The connector's **WebRTC token** from Agent Studio — the Bearer credential
