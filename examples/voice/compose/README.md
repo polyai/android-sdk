@@ -177,7 +177,7 @@ PolyVoice.call(
         // hostIdentifier defaults to this app's package name (sent as X-Host) — override only if your
         // connector is registered against a specific host
     ),
-    options = VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"), // gateway token; omit if one token does both
+    options = VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"), // WebRTC token; omit if one token does both
 )
 ```
 

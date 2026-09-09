@@ -24,7 +24,6 @@ class OkHttpVoiceRestApiTest {
 
     private fun api(server: MockWebServer) = OkHttpVoiceRestApi(
         restBaseUrl = server.url("/api/v1").toString(),
-        iceServersUrl = { token -> server.url("/api/v1/ice-servers?token=$token").toString() },
         apiKey = "connector-key",
         hostIdentifier = "test-host",
         deviceType = "tablet",
@@ -77,47 +76,6 @@ class OkHttpVoiceRestApiTest {
         }
     }
 
-    @Test
-    fun fetchIceServers_parsesTurnAndStun() {
-        MockWebServer().use { server ->
-            server.enqueue(
-                MockResponse(
-                    code = 200,
-                    body = """
-                        {"iceServers":[
-                          {"urls":["stun:stun.l.google.com:19302"]},
-                          {"urls":["turn:turn.example.com:3478"],"username":"u","credential":"c"}
-                        ]}
-                    """.trimIndent(),
-                ),
-            )
-            server.start()
 
-            val servers = runBlocking { api(server).fetchIceServers("acc-123") }
-            assertEquals(2, servers.size)
-            assertEquals(listOf("turn:turn.example.com:3478"), servers[1].urls)
-            assertEquals("u", servers[1].username)
-            assertEquals("c", servers[1].credential)
-        }
-    }
 
-    @Test
-    fun fetchIceServers_fallsBackToStunOnError() {
-        MockWebServer().use { server ->
-            server.enqueue(MockResponse(code = 500, body = "boom"))
-            server.start()
-            val servers = runBlocking { api(server).fetchIceServers("acc-123") }
-            assertEquals(listOf("stun:stun.l.google.com:19302"), servers.single().urls)
-        }
-    }
-
-    @Test
-    fun fetchIceServers_fallsBackOnMalformedBody() {
-        MockWebServer().use { server ->
-            server.enqueue(MockResponse(code = 200, body = "not json"))
-            server.start()
-            val servers = runBlocking { api(server).fetchIceServers("acc-123") }
-            assertEquals(listOf("stun:stun.l.google.com:19302"), servers.single().urls)
-        }
-    }
 }

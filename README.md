@@ -1799,7 +1799,7 @@ import ai.poly.voice.PolyVoice
 val call = PolyVoice.call(
     context,
     Configuration(apiKey = "YOUR_API_KEY"),          // connector token (X-Token)
-    VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"),  // WebRTC gateway token — distinct, also required
+    VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"),  // WebRTC token — distinct, also required
 )
 
 // Observe the lifecycle: Idle → Connecting → Connected → Ended / Failed.
@@ -1814,11 +1814,15 @@ call.setMuted(true)                      // in-call controls
 call.end()
 ```
 
+Calls are placed over PolyAI's **`webrtc-bridge`** (the older `webrtc-gateway` was retired in
+MES-1658). Nothing changes in your code — see
+[How a call connects](polyvoice/README.md#how-a-call-connects) for what moved underneath.
+
 `CallState`, `PolyError.Voice`, `Configuration`, and `Environment` are the same types from
 `ai.poly:messaging` — no new vocabulary. A call needs **two credentials, both required and distinct**,
 from [Agent Studio](https://studio.poly.ai) › Connector Settings: the **API key** (`Configuration.apiKey`,
 authenticates the connector) and the **WebRTC token** (`VoiceOptions.webrtcToken`, authenticates the media
-gateway). It also needs the **`RECORD_AUDIO`** runtime permission — the SDK declares it; you request the
+backend). It also needs the **`RECORD_AUDIO`** runtime permission — the SDK declares it; you request the
 grant before `start()`.
 
 📖 **Full voice guide → [`polyvoice/README.md`](polyvoice/README.md)** — permissions, audio-output routing

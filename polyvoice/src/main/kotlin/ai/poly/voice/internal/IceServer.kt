@@ -2,6 +2,8 @@
 
 package ai.poly.voice.internal
 
+import org.json.JSONArray
+
 /**
  * A STUN/TURN server, decoupled from `org.webrtc.PeerConnection.IceServer` so the port layer and
  * tests never touch the native type. The `AndroidWebRtcPeer` adapter maps these to the libwebrtc form.
@@ -12,7 +14,40 @@ internal data class IceServer(
     val credential: String? = null,
 ) {
     internal companion object {
-        /** The public-STUN fallback used when the gateway's ice-servers endpoint is unavailable. */
-        val DEFAULT: List<IceServer> = listOf(IceServer(urls = listOf("stun:stun.l.google.com:19302")))
+        /**
+         * STUN fallback when the bridge's provision response carries no ICE servers.
+         *
+         * Media terminates at Cloudflare's edge, so Cloudflare's own STUN endpoint is the supported
+         * one — the old `stun.l.google.com` default went out with the gateway. TURN relay (needed
+         * behind symmetric NAT / CGNAT) arrives in the provision response once the bridge sends one
+         * (RUN-1780).
+         */
+        val DEFAULT: List<IceServer> = listOf(IceServer(urls = listOf("stun:stun.cloudflare.com:3478")))
+
+        /**
+         * Parse an `iceServers` array as the bridge sends it, inline in the provision response.
+         */
+        fun parseList(arr: JSONArray?): List<IceServer> {
+            if (arr == null) return emptyList()
+            val out = ArrayList<IceServer>(arr.length())
+            for (i in 0 until arr.length()) {
+                val obj = arr.optJSONObject(i) ?: continue
+                val urls = when {
+                    obj.optJSONArray("urls") != null -> {
+                        val u = obj.getJSONArray("urls")
+                        (0 until u.length()).mapNotNull { u.optString(it).takeIf { s -> s.isNotEmpty() } }
+                    }
+                    obj.optString("urls").isNotEmpty() -> listOf(obj.getString("urls"))
+                    else -> emptyList()
+                }
+                if (urls.isEmpty()) continue
+                out += IceServer(
+                    urls = urls,
+                    username = obj.optString("username").takeIf { it.isNotEmpty() },
+                    credential = obj.optString("credential").takeIf { it.isNotEmpty() },
+                )
+            }
+            return out
+        }
     }
 }

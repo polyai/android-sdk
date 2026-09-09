@@ -19,18 +19,16 @@ import org.json.JSONObject
 import java.util.UUID
 
 /**
- * Self-contained REST auth for a call: `POST /access-token` → `POST /sessions`, plus the gateway's
- * `GET /ice-servers`. The header conventions mirror the chat client's `OkHttpRestApi` so a call
+ * Self-contained REST auth for a call: `POST /access-token` → `POST /sessions`. ICE servers come
+ * from the bridge's provision response, not from a separate endpoint. The header conventions mirror the chat client's `OkHttpRestApi` so a call
  * authenticates exactly like a chat session. Kept intentionally lighter than the chat client (no
  * token cache / retry ladder) — a call is short-lived and fetches fresh credentials each time.
  *
  * @param restBaseUrl messaging REST base (ends in `/api/v1`).
- * @param iceServersUrl builds the gateway ICE-servers URL for a given access token.
  * @param deviceType the `device_type` reported on session create (`mobile`/`tablet`), matching chat.
  */
 internal class OkHttpVoiceRestApi(
     private val restBaseUrl: String,
-    private val iceServersUrl: (token: String) -> String,
     private val apiKey: String,
     private val hostIdentifier: String,
     private val deviceType: String,
@@ -80,46 +78,6 @@ internal class OkHttpVoiceRestApi(
             ?: throw PolyError.Voice.SignalingFailed("session creation returned no session id")
         logger.d("[voice] session created")
         sessionId
-    }
-
-    override suspend fun fetchIceServers(token: String): List<IceServer> = withContext(io) {
-        // Best-effort: any failure falls back to public STUN so a call can still connect on open NATs.
-        runCatching {
-            val req = Request.Builder()
-                .url(iceServersUrl(token))
-                .header("Accept", "application/json")
-                .get()
-                .build()
-            val (code, body) = execute(req)
-            if (code !in 200..299) return@runCatching IceServer.DEFAULT
-            parseIceServers(body).ifEmpty { IceServer.DEFAULT }
-        }.getOrElse {
-            logger.w("[voice] ice-servers fetch failed; falling back to STUN", mapOf("error" to (it.message ?: "")))
-            IceServer.DEFAULT
-        }
-    }
-
-    private fun parseIceServers(body: String): List<IceServer> {
-        val arr = runCatching { JSONObject(body).optJSONArray("iceServers") }.getOrNull() ?: return emptyList()
-        val out = ArrayList<IceServer>(arr.length())
-        for (i in 0 until arr.length()) {
-            val obj = arr.optJSONObject(i) ?: continue
-            val urls = when {
-                obj.optJSONArray("urls") != null -> {
-                    val u = obj.getJSONArray("urls")
-                    (0 until u.length()).mapNotNull { u.optString(it).takeIf { s -> s.isNotEmpty() } }
-                }
-                obj.optString("urls").isNotEmpty() -> listOf(obj.getString("urls"))
-                else -> emptyList()
-            }
-            if (urls.isEmpty()) continue
-            out += IceServer(
-                urls = urls,
-                username = obj.optString("username").takeIf { it.isNotEmpty() },
-                credential = obj.optString("credential").takeIf { it.isNotEmpty() },
-            )
-        }
-        return out
     }
 
     private data class Http(val code: Int, val body: String)

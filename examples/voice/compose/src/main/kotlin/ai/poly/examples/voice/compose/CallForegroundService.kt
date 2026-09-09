@@ -31,7 +31,7 @@ class CallForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Keep the CPU running for the WebRTC media/network threads while backgrounded — without it the
-        // OS throttles them, RTP stops, and the gateway times the call out even though the mic is alive.
+        // OS throttles them, RTP stops, and the call times out even though the mic is alive.
         if (wakeLock == null) {
             wakeLock = getSystemService(PowerManager::class.java)
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "poly:voice-call")

@@ -8,10 +8,11 @@ import ai.poly.voice.internal.VoiceHosts
 import ai.poly.voice.internal.adapters.AndroidAudioControl
 import ai.poly.voice.internal.adapters.AndroidLogLogger
 import ai.poly.voice.internal.adapters.AndroidWebRtcPeer
-import ai.poly.voice.internal.adapters.OkHttpSignalingTransport
+import ai.poly.voice.internal.adapters.OkHttpBridgeApi
+import ai.poly.voice.internal.adapters.OkHttpEventsTransport
 import ai.poly.voice.internal.adapters.OkHttpVoiceRestApi
 import ai.poly.voice.internal.adapters.OkHttpVoiceSessionLink
-import ai.poly.voice.internal.services.CallCoordinator
+import ai.poly.voice.internal.services.BridgeCallCoordinator
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -58,16 +59,15 @@ public object PolyVoice {
         val logger = AndroidLogLogger(config.logLevel)
         val hosts = VoiceHosts(config.environment, options.signalingHost)
         val hostId = config.hostIdentifier ?: app.packageName
-        // The WebRTC gateway authenticates the offer + ICE-servers fetch with the connector's WebRTC
-        // token — always a distinct value from the API key.
-        val gatewayToken = options.webrtcToken
+        // The bridge authenticates provision with the connector's WebRTC token — always a distinct
+        // value from the API key.
+        val bridgeToken = options.webrtcToken
         // device_type mirrors the chat SDK's detection (smallestScreenWidthDp >= 600 ⇒ tablet) so voice
         // and chat report the same dimension on session create.
         val deviceType = if (app.resources.configuration.smallestScreenWidthDp >= 600) "tablet" else "mobile"
 
         val restApi = OkHttpVoiceRestApi(
             restBaseUrl = hosts.restBaseUrl(),
-            iceServersUrl = { token -> hosts.iceServersUrl(token) },
             apiKey = config.apiKey,
             hostIdentifier = hostId,
             deviceType = deviceType,
@@ -78,7 +78,7 @@ public object PolyVoice {
             wsUrl = { sessionId, token -> hosts.voiceSessionWsUrl(sessionId, token) },
             logger = logger,
         )
-        val signaling = OkHttpSignalingTransport(logger)
+        val events = OkHttpEventsTransport(logger)
         val webrtc = AndroidWebRtcPeer(app, logger)
         val audioControl = AndroidAudioControl(app, logger, useSpeakerphone = options.speakerphone)
 
@@ -86,13 +86,17 @@ public object PolyVoice {
         // this one thread, so its mutable state needs no locks.
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
 
-        val coordinator = CallCoordinator(
-            gatewayToken = gatewayToken,
+        val coordinator = BridgeCallCoordinator(
+            bridgeToken = bridgeToken,
             restApi = restApi,
+            bridge = OkHttpBridgeApi(
+                baseUrl = hosts.bridgeBaseUrl(),
+                authToken = bridgeToken,
+                logger = logger,
+            ),
             sessionLink = sessionLink,
-            signaling = signaling,
+            events = events,
             webrtc = webrtc,
-            signalingUrl = hosts.signalingUrl(),
             scope = scope,
             logger = logger,
             audioControl = audioControl,

@@ -7,7 +7,7 @@ import ai.poly.messaging.Cancellable
 import ai.poly.messaging.PolyError
 import ai.poly.messaging.ValueListener
 import ai.poly.messaging.voice.CallState
-import ai.poly.voice.internal.services.CallCoordinator
+import ai.poly.voice.internal.services.BridgeCallCoordinator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +23,7 @@ import java.util.concurrent.Executor
  * Mirrors the gated `ai.poly.messaging.voice.PolyCall` surface, but backed by a real media engine.
  */
 public class VoiceCall internal constructor(
-    private val coordinator: CallCoordinator,
+    private val coordinator: BridgeCallCoordinator,
     private val scope: CoroutineScope,
     private val permissionGranted: () -> Boolean,
 ) {
