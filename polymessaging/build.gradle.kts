@@ -83,7 +83,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(kotlin("test")) // kotlin.test assertions on JUnit4
-    testImplementation("org.json:json:20231013") // real org.json so wire/JWT tests run on the JVM (the android.jar one is a stub)
+    testImplementation("org.json:json:20260719") // real org.json so wire/JWT tests run on the JVM (the android.jar one is a stub)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
