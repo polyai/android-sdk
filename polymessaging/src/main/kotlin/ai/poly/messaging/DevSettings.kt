@@ -2,6 +2,7 @@
 
 package ai.poly.messaging
 
+import ai.poly.messaging.internal.PolyVoiceInternalApi
 import android.content.Context
 import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +20,7 @@ import java.net.URI
  * `initialize(...)` config so the picker reflects the active environment on first
  * launch (a persisted value always wins over the seed).
  */
+@OptIn(PolyVoiceInternalApi::class) // same-module caller of PolyMessaging.currentConfig(), not :polyvoice
 public open class DevSettings @JvmOverloads constructor(
     context: Context,
     private val hostIdentifier: String? = null,

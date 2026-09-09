@@ -2,6 +2,7 @@
 
 package ai.poly.messaging
 
+import ai.poly.messaging.internal.PolyVoiceInternalApi
 import ai.poly.messaging.internal.helpers.JwtValidator
 import ai.poly.messaging.internal.helpers.SessionStore
 import ai.poly.messaging.internal.helpers.polyFatalError
@@ -13,6 +14,7 @@ import android.content.Context
  * Call [initialize] once in your `Application.onCreate()`, then [chat]/[start] to get a
  * [ChatSession]. From Java these are plain static calls (`PolyMessaging.chat(...)`).
  */
+@OptIn(PolyVoiceInternalApi::class) // this object is also the sole caller of currentConfig() below
 public object PolyMessaging {
 
     /** SDK version (matches the published coordinate). */
@@ -108,6 +110,14 @@ public object PolyMessaging {
     internal fun currentContext(): Context =
         synchronized(lock) { appContext } ?: polyFatalError("PolyMessaging: call initialize(context, config) before using the SDK")
 
-    internal fun currentConfig(): Configuration =
+    /**
+     * The `Configuration` last passed to [initialize]. `public` only so `:polyvoice`'s
+     * zero-`Configuration` `PolyVoice.call(context, options)` overload can read it — see
+     * [PolyVoiceInternalApi]. Same crash-early contract as [chat]/[voice]: [initialize] must have
+     * been called first.
+     */
+    @PolyVoiceInternalApi
+    @JvmStatic
+    public fun currentConfig(): Configuration =
         synchronized(lock) { storedConfig } ?: polyFatalError("PolyMessaging: call initialize(context, config) before using the SDK")
 }

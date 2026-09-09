@@ -2,11 +2,9 @@
 
 package ai.poly.examples.voice.compose
 
-import ai.poly.messaging.Configuration
 import ai.poly.messaging.voice.CallState
 import ai.poly.voice.AudioDevice
 import ai.poly.voice.PolyVoice
-import ai.poly.voice.VoiceOptions
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -67,18 +65,9 @@ private fun CallScreen() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // One call object for this screen; closed when the screen leaves the composition.
-    // Fill in your connector from Agent Studio › Connector Settings (see the README's "Use your own agent").
-    val call = remember {
-        PolyVoice.call(
-            context = context,
-            config = Configuration(
-                apiKey = "YOUR_API_KEY", // connector token, sent as X-Token
-                // environment defaults to Environment.US; hostIdentifier defaults to this app's package name
-            ),
-            options = VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"), // the connector's WebRTC token (distinct from apiKey)
-        )
-    }
+    // One call object for this screen; closed when the screen leaves the composition. Both tokens
+    // were already set once at app launch (see VoiceApplication) — nothing to configure here.
+    val call = remember { PolyVoice.call(context) }
     DisposableEffect(Unit) { onDispose { CallForegroundService.stop(context); call.close() } }
 
     val state by call.state.collectAsStateWithLifecycle()

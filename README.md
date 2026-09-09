@@ -1573,6 +1573,7 @@ PolyMessaging.initialize(context, Configuration(apiKey = "YOUR_API_KEY"))
 | `heartbeatIntervalSeconds` | `null` (30 s) | Override the heartbeat interval; server caps may overrule |
 | `sessionTimeoutSeconds` | `null` (600) | Reserved — currently ignored; the SDK fixes the idle-timeout at 600 s (the backend's 10-min WebSocket idle timeout) |
 | `maxReconnectAttempts` | `null` (10) | Override the reconnect cap |
+| `webrtcToken` | `null` | The web calling token for [`PolyVoice`](#voice-calling-aipolyvoice) — set it here once instead of repeating it at every `PolyVoice.call(...)` site. Ignored by chat; `null` if this app doesn't place calls |
 
 **Environments:**
 
@@ -1609,6 +1610,7 @@ PolyMessaging.initialize(
         heartbeatIntervalSeconds = 30,           // server caps may overrule
         sessionTimeoutSeconds = 600,             // reserved — currently ignored; idle timeout is fixed at 600 s
         maxReconnectAttempts = 10,               // reconnect budget before Failed
+        webrtcToken = null,                      // set if this app also calls PolyVoice — see below
     ),
 )
 ```
@@ -1624,6 +1626,7 @@ Configuration config = new Configuration.Builder("YOUR_API_KEY")
     .heartbeatIntervalSeconds(30)
     .sessionTimeoutSeconds(600)                // reserved — currently ignored; idle timeout is fixed at 600 s
     .maxReconnectAttempts(10)
+    .webrtcToken(null)                         // set if this app also calls PolyVoice — see below
     .build();
 PolyMessaging.initialize(context, config);
 ```
@@ -1794,13 +1797,18 @@ dependencies {
 ```
 
 ```kotlin
+import ai.poly.messaging.Configuration
+import ai.poly.messaging.PolyMessaging
 import ai.poly.voice.PolyVoice
 
-val call = PolyVoice.call(
+// At launch — sets both tokens once (webrtcToken is only needed for voice):
+PolyMessaging.initialize(
     context,
-    Configuration(apiKey = "YOUR_API_KEY"),          // connector token (X-Token)
-    VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"),  // WebRTC token — distinct, also required
+    Configuration(apiKey = "YOUR_API_KEY", webrtcToken = "YOUR_WEBRTC_TOKEN"),
 )
+
+// Elsewhere — no config to pass, same pattern as PolyMessaging.chat()/voice():
+val call = PolyVoice.call(context)
 
 // Observe the lifecycle: Idle → Connecting → Connected → Ended / Failed.
 lifecycleScope.launch {
@@ -1814,6 +1822,9 @@ call.setMuted(true)                      // in-call controls
 call.end()
 ```
 
+Need a different connector than the one `initialize(...)` set? Pass a `Configuration` explicitly
+instead — `PolyVoice.call(context, config, options)`.
+
 Calls are placed over PolyAI's **`webrtc-bridge`** (the older `webrtc-gateway` was retired in
 MES-1658). Nothing changes in your code — see
 [How a call connects](polyvoice/README.md#how-a-call-connects) for what moved underneath.
@@ -1821,9 +1832,10 @@ MES-1658). Nothing changes in your code — see
 `CallState`, `PolyError.Voice`, `Configuration`, and `Environment` are the same types from
 `ai.poly:messaging` — no new vocabulary. A call needs **two credentials, both required and distinct**,
 from [Agent Studio](https://studio.poly.ai) › Connector Settings: the **API key** (`Configuration.apiKey`,
-authenticates the connector) and the **WebRTC token** (`VoiceOptions.webrtcToken`, authenticates the media
-backend). It also needs the **`RECORD_AUDIO`** runtime permission — the SDK declares it; you request the
-grant before `start()`.
+authenticates the connector) and the **WebRTC token** (`Configuration.webrtcToken`, authenticates the
+media backend). Setting both on `Configuration` means the same value you pass to
+`PolyMessaging.initialize(...)` for chat also covers every `PolyVoice.call(...)`. It also needs the **`RECORD_AUDIO`** runtime
+permission — the SDK declares it; you request the grant before `start()`.
 
 📖 **Full voice guide → [`polyvoice/README.md`](polyvoice/README.md)** — permissions, audio-output routing
 (speaker / earpiece / headset / Bluetooth), interruptions, background calls (foreground service), and R8.
@@ -1838,7 +1850,8 @@ For internal builds, `DevSettings` is a `SharedPreferences`-backed runtime `Conf
 
 Examples live under [`examples/`](examples/), split by product — **[`chat/`](examples/chat/)**
 (`ai.poly:messaging`) and **[`voice/`](examples/voice/)** (`ai.poly:voice`) — each mirrored across
-**Jetpack Compose** and **Android Views**. Open a module in Android Studio, set your `apiKey`, and Run.
+**Jetpack Compose** and **Android Views**. Open a module in Android Studio, set the credential(s)
+documented by that module (`apiKey` for chat; `apiKey` + `webrtcToken` for voice), and Run.
 
 ### Chat (`examples/chat`)
 
@@ -1858,7 +1871,8 @@ A 7-rung ladder — each level builds on the previous one; see its README for wh
 
 A one-screen **tap-to-call** demo on `ai.poly:voice` — build a `VoiceCall`, request the mic, start /
 mute / end, and switch the audio output (speaker / earpiece / headset / Bluetooth) mid-call. Set your
-connector token + WebRTC token in the `PolyVoice.call(...)` block. See [Voice calling](#voice-calling-aipolyvoice).
+connector token + WebRTC token once in the `Application` class's `PolyMessaging.initialize(...)` call.
+See [Voice calling](#voice-calling-aipolyvoice).
 
 | Demo | What it shows | Compose · Views |
 |---|---|---|

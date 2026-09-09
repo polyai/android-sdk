@@ -219,6 +219,7 @@ public final class ai/poly/messaging/Configuration {
 	public final field maxReconnectAttempts Ljava/lang/Integer;
 	public final field sessionTimeoutSeconds Ljava/lang/Integer;
 	public final field streamingEnabled Z
+	public final field webrtcToken Ljava/lang/String;
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;)V
 	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;)V
@@ -227,7 +228,8 @@ public final class ai/poly/messaging/Configuration {
 	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;)V
 	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;)V
 	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)V
-	public synthetic fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class ai/poly/messaging/Configuration$Builder {
@@ -240,6 +242,7 @@ public final class ai/poly/messaging/Configuration$Builder {
 	public final fun maxReconnectAttempts (Ljava/lang/Integer;)Lai/poly/messaging/Configuration$Builder;
 	public final fun sessionTimeoutSeconds (Ljava/lang/Integer;)Lai/poly/messaging/Configuration$Builder;
 	public final fun streamingEnabled (Z)Lai/poly/messaging/Configuration$Builder;
+	public final fun webrtcToken (Ljava/lang/String;)Lai/poly/messaging/Configuration$Builder;
 }
 
 public abstract interface class ai/poly/messaging/Connection {
@@ -882,6 +885,7 @@ public final class ai/poly/messaging/PolyMessaging {
 	public static final fun clearResumableSession ()V
 	public static final fun clearResumableSession (Ljava/lang/String;)V
 	public static final fun configure (Landroid/content/Context;Lai/poly/messaging/Configuration;)Lai/poly/messaging/PolyMessagingClient;
+	public static final fun currentConfig ()Lai/poly/messaging/Configuration;
 	public static final fun hasResumableSession ()Z
 	public static final fun hasResumableSession (Ljava/lang/String;)Z
 	public static final fun initialize (Landroid/content/Context;Lai/poly/messaging/Configuration;)V
@@ -1149,6 +1153,9 @@ public abstract interface class ai/poly/messaging/ValueListener {
 
 public final class ai/poly/messaging/VersionKt {
 	public static final fun getPOLY_MESSAGING_VERSION ()Ljava/lang/String;
+}
+
+public abstract interface annotation class ai/poly/messaging/internal/PolyVoiceInternalApi : java/lang/annotation/Annotation {
 }
 
 public abstract class ai/poly/messaging/voice/CallState {
