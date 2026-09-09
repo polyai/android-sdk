@@ -24,13 +24,18 @@ The call needs the **`RECORD_AUDIO`** runtime permission. The SDK declares it in
 like any dangerous permission — your app must request the grant from the user before starting a call.
 
 ```kotlin
+import ai.poly.messaging.Configuration
+import ai.poly.messaging.PolyMessaging
 import ai.poly.voice.PolyVoice
 
-val call = PolyVoice.call(
+// At launch — sets both tokens once (webrtcToken is only needed for voice):
+PolyMessaging.initialize(
     context,
-    Configuration(apiKey = "YOUR_API_KEY"),            // connector token — from Agent Studio › Connector Settings
-    VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"),   // WebRTC token — same place (see Credentials below)
+    Configuration(apiKey = "YOUR_API_KEY", webrtcToken = "YOUR_WEBRTC_TOKEN"), // both from Agent Studio › Connector Settings
 )
+
+// Elsewhere — no config to pass, same pattern as PolyMessaging.chat()/voice():
+val call = PolyVoice.call(context)
 
 // Observe the call lifecycle (Idle → Connecting → Connected → Ended / Failed).
 lifecycleScope.launch {
@@ -57,6 +62,9 @@ call.end()            // hang up and release the mic
 `CallState`, `PolyError.Voice.*`, `Configuration`, and `Environment` are the same types from
 `ai.poly:messaging` — no new vocabulary. Java callers get `Executor` + `Callback<Unit>` overloads of
 `start` / `end` / `setMuted`, mirroring the chat API.
+
+Need a different connector than the one `initialize(...)` set? Pass a `Configuration` explicitly
+instead: `PolyVoice.call(context, config, options)`.
 
 ## Permissions
 
@@ -90,23 +98,32 @@ Connector Settings** (the same connector you use for chat):
 | Value | What it is | Required? | Sent as |
 |---|---|---|---|
 | **API key** — `Configuration.apiKey` | your **connector token** | **Yes** | `X-Token` (authenticates the call) |
-| **WebRTC token** — `VoiceOptions.webrtcToken` | the **auth token** for the media connection — a **distinct** token from the API key | **Yes** | `Authorization: Bearer` when the call is provisioned |
+| **WebRTC token** — `Configuration.webrtcToken` | the **auth token** for the media connection — a **distinct** token from the API key | **Yes** | `Authorization: Bearer` when the call is provisioned |
+
+Set both once on `Configuration` at `PolyMessaging.initialize(...)` — the same call chat already needs
+— and every `PolyVoice.call(...)` site picks them up automatically:
+
+```kotlin
+PolyMessaging.initialize(
+    context,
+    Configuration(apiKey = "YOUR_API_KEY", webrtcToken = "YOUR_WEBRTC_TOKEN"), // both required, distinct
+)
+val call = PolyVoice.call(context)
+```
+
+For a call that needs a different connector than the one `initialize(...)` set, pass an explicit
+`Configuration` with both credentials:
 
 ```kotlin
 PolyVoice.call(
     context,
-    Configuration(apiKey = "YOUR_API_KEY"),          // X-Token — required
-    VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"), // required — distinct from the API key
+    Configuration(apiKey = "YOUR_API_KEY", webrtcToken = "YOUR_WEBRTC_TOKEN"),
 )
 ```
 
 Both are **always required and always distinct**: the API key authenticates the *connector*, the WebRTC
-token authenticates the *media backend*. (The example apps set both.)
-
-> The two tokens sit in different places on purpose: the **API key** authenticates the *connector* and
-> is shared by chat and voice, so it lives on the shared `Configuration`; the **WebRTC token**
-> authenticates the *voice backend* only, so it's a required voice-side credential on `VoiceOptions`
-> rather than dead weight on the chat config.
+token authenticates the *media backend*. `PolyVoice.call(...)` throws `PolyError.InvalidConfiguration`
+if `Configuration.webrtcToken` is not set. (The example apps set both credentials on `Configuration`.)
 
 Two more values have sensible defaults, so **most apps don't set them** — but good to know:
 
@@ -244,4 +261,5 @@ that's unusually aggressive, the shipped consumer rules still protect the SDK; y
 
 **Runnable examples** — a one-screen tap-to-call demo with the audio-output picker, in both toolkits:
 [`examples/voice/compose`](../examples/voice/compose/) · [`examples/voice/views`](../examples/voice/views/).
-Drop your connector token + WebRTC token into the `PolyVoice.call(...)` block and run.
+Drop your connector token + WebRTC token into the `PolyMessaging.initialize(...)` call in the
+example's `Application` class and run.

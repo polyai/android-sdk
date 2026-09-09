@@ -6,6 +6,15 @@ is pre-1.0, breaking changes bump the **minor** version.
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** the WebRTC token has moved from `VoiceOptions.webrtcToken` to
+  `Configuration.webrtcToken`, so both connector credentials are configured together. Set both once
+  in `PolyMessaging.initialize(...)`; `PolyVoice.call(context)` then reads that stored configuration,
+  matching `PolyMessaging.chat()` / `PolyMessaging.voice()`. `PolyVoice.call(context, config)` remains
+  available for an explicit configuration, and its `options` parameter now defaults to
+  `VoiceOptions()`. Migrate `VoiceOptions(webrtcToken = "…")` and
+  `VoiceOptions.Builder("…")` call sites by moving the token to `Configuration`.
+
 ## [0.10.0] - 2026-09-09
 
 ### Changed

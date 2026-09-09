@@ -6,9 +6,9 @@ screen, one button, plus mute and an audio-output picker — all in one
 
 ## Run it
 
-First, set your connector in the `PolyVoice.call(...)` block at the top of `MainActivity.kt` — your **API
-key** + **WebRTC token** from Agent Studio (see [Use your own agent](#use-your-own-agent)). Then open the
-repo in Android Studio and run the **voice/compose** module, or from the repo root:
+First, set your connector in [`VoiceApplication.kt`](src/main/kotlin/ai/poly/examples/voice/compose/VoiceApplication.kt)
+— your **API key** + **WebRTC token** from Agent Studio (see [Use your own agent](#use-your-own-agent)).
+Then open the repo in Android Studio and run the **voice/compose** module, or from the repo root:
 
 ```bash
 ./gradlew :examples:voice:compose:installDebug
@@ -29,7 +29,8 @@ connection works.
 
 ## What this example demonstrates
 
-- `PolyVoice.call(context, config, options)` → a `VoiceCall`
+- `PolyMessaging.initialize(...)` with both tokens once, at app launch (`VoiceApplication`), then
+  `PolyVoice.call(context)` → a `VoiceCall` — no per-call-site config
 - Observing `call.state: StateFlow<CallState>` (`Idle → Connecting → Connected → Ended / Failed`)
 - The `RECORD_AUDIO` runtime-permission flow before `start()`
 - In-call controls: `setMuted(...)` / `end()`, and `close()` on teardown
@@ -61,21 +62,33 @@ The SDK auto-merges `INTERNET` / `ACCESS_NETWORK_STATE` / `RECORD_AUDIO`; this e
 Each subsection leads with **the SDK call** (the actual API), then shows **how it's wired into a
 `@Composable`**.
 
+### Initialize once, at app launch — `PolyMessaging.initialize(...)`
+
+Both tokens are set a single time, in [`VoiceApplication.kt`](src/main/kotlin/ai/poly/examples/voice/compose/VoiceApplication.kt):
+
+```kotlin
+class VoiceApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        PolyMessaging.initialize(
+            context = this,
+            config = Configuration(
+                apiKey = "YOUR_API_KEY", // connector token, sent as X-Token
+                webrtcToken = "YOUR_WEBRTC_TOKEN", // the connector's WebRTC token (distinct from apiKey)
+            ),
+        )
+    }
+}
+```
+
 ### Build the call — `PolyVoice.call(...)`
 
 A call is self-contained: it creates its own session, independent of any chat. Hold it with `remember`
-and close it when the screen leaves the composition.
+and close it when the screen leaves the composition. Nothing left to configure — `call(context)` alone
+reads what `initialize(...)` already stored:
 
 ```kotlin
-val call = remember {
-    PolyVoice.call(
-        context = context,
-        config = Configuration(
-            apiKey = "YOUR_API_KEY", // connector token, sent as X-Token
-        ),
-        options = VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"), // the connector's WebRTC token (distinct from apiKey)
-    )
-}
+val call = remember { PolyVoice.call(context) }
 // (the real teardown also stops the foreground service — see "Survive the background" below)
 DisposableEffect(Unit) { onDispose { call.close() } }
 ```
@@ -165,19 +178,20 @@ The required manifest entries (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MICROPH
 ## Use your own agent
 
 You need **two credentials**, both on your agent in **[Agent Studio](https://studio.poly.ai) › Connector
-Settings**: the **API key** (connector token) and the **WebRTC token**. Set them in the
-`PolyVoice.call(...)` block at the top of `MainActivity.kt`:
+Settings**: the **API key** (connector token) and the **WebRTC token**. Set them once in
+[`VoiceApplication.kt`](src/main/kotlin/ai/poly/examples/voice/compose/VoiceApplication.kt)'s
+`PolyMessaging.initialize(...)` call:
 
 ```kotlin
-PolyVoice.call(
-    context = context,
+PolyMessaging.initialize(
+    context = this,
     config = Configuration(
         apiKey = "YOUR_API_KEY",  // connector token, sent as X-Token — required
+        webrtcToken = "YOUR_WEBRTC_TOKEN", // WebRTC token — distinct, also required
         // environment defaults to Environment.US — set .UK / .EUW / .cluster("…") only if your agent is elsewhere
         // hostIdentifier defaults to this app's package name (sent as X-Host) — override only if your
         // connector is registered against a specific host
     ),
-    options = VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"), // WebRTC token; omit if one token does both
 )
 ```
 

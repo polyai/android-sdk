@@ -28,6 +28,12 @@ public class Configuration @JvmOverloads constructor(
     @JvmField public val sessionTimeoutSeconds: Int? = null,
     /** Override the default max reconnect attempts (10). Server capabilities still win once connected. */
     @JvmField public val maxReconnectAttempts: Int? = null,
+    /**
+     * The connector's WebRTC (web calling) token — set it here, once, alongside [apiKey], so it
+     * doesn't need repeating at every `PolyVoice.call(...)` site. Ignored by chat; `PolyMessaging`
+     * itself never reads it. Chat-only apps leave this `null`.
+     */
+    @JvmField public val webrtcToken: String? = null,
 ) {
     /** Java-friendly builder. Kotlin callers can use the primary constructor instead. */
     public class Builder(private val apiKey: String) {
@@ -38,6 +44,7 @@ public class Configuration @JvmOverloads constructor(
         private var heartbeatIntervalSeconds: Int? = null
         private var sessionTimeoutSeconds: Int? = null
         private var maxReconnectAttempts: Int? = null
+        private var webrtcToken: String? = null
 
         public fun environment(value: Environment): Builder = apply { environment = value }
         public fun hostIdentifier(value: String?): Builder = apply { hostIdentifier = value }
@@ -46,6 +53,7 @@ public class Configuration @JvmOverloads constructor(
         public fun heartbeatIntervalSeconds(value: Int?): Builder = apply { heartbeatIntervalSeconds = value }
         public fun sessionTimeoutSeconds(value: Int?): Builder = apply { sessionTimeoutSeconds = value }
         public fun maxReconnectAttempts(value: Int?): Builder = apply { maxReconnectAttempts = value }
+        public fun webrtcToken(value: String?): Builder = apply { webrtcToken = value }
 
         public fun build(): Configuration = Configuration(
             apiKey = apiKey,
@@ -56,6 +64,7 @@ public class Configuration @JvmOverloads constructor(
             heartbeatIntervalSeconds = heartbeatIntervalSeconds,
             sessionTimeoutSeconds = sessionTimeoutSeconds,
             maxReconnectAttempts = maxReconnectAttempts,
+            webrtcToken = webrtcToken,
         )
     }
 }

@@ -7,9 +7,9 @@ one screen, start/end, mute, and an audio-output picker. The view logic lives in
 
 ## Run it
 
-First, set your connector in the `PolyVoice.call(...)` block at the top of `CallActivity.kt` — your **API
-key** + **WebRTC token** from Agent Studio (see [Use your own agent](#use-your-own-agent)). Then open the
-repo in Android Studio and run the **voice/views** module, or from the repo root:
+First, set your connector in [`VoiceApplication.kt`](src/main/kotlin/ai/poly/examples/voice/views/VoiceApplication.kt)
+— your **API key** + **WebRTC token** from Agent Studio (see [Use your own agent](#use-your-own-agent)).
+Then open the repo in Android Studio and run the **voice/views** module, or from the repo root:
 
 ```bash
 ./gradlew :examples:voice:views:installDebug
@@ -25,7 +25,8 @@ host …`, that's the emulator: relaunch with `-dns-server 8.8.8.8`, or use a re
 
 ## What this example demonstrates
 
-- `PolyVoice.call(context, config, options)` → a `VoiceCall`
+- `PolyMessaging.initialize(...)` with both tokens once, at app launch (`VoiceApplication`), then
+  `PolyVoice.call(context)` → a `VoiceCall` — no per-call-site config
 - Collecting `call.state` lifecycle-aware with `repeatOnLifecycle` to drive the views
 - The `RECORD_AUDIO` runtime-permission flow (`registerForActivityResult`) before `start()`
 - In-call controls: `setMuted(...)` / `end()`, and `close()` in `onDestroy()`
@@ -51,18 +52,31 @@ The SDK auto-merges `INTERNET` / `ACCESS_NETWORK_STATE` / `RECORD_AUDIO`; this e
 
 Each subsection leads with **the SDK call**, then shows **how it's wired into the `Activity`**.
 
-### Build the call — `PolyVoice.call(...)`
+### Initialize once, at app launch — `PolyMessaging.initialize(...)`
+
+Both tokens are set a single time, in [`VoiceApplication.kt`](src/main/kotlin/ai/poly/examples/voice/views/VoiceApplication.kt):
 
 ```kotlin
-private val call by lazy {
-    PolyVoice.call(
-        context = this,
-        config = Configuration(
-            apiKey = "YOUR_API_KEY", // connector token, sent as X-Token
-        ),
-        options = VoiceOptions(webrtcToken = "YOUR_WEBRTC_TOKEN"), // the connector's WebRTC token (distinct from apiKey)
-    )
+class VoiceApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        PolyMessaging.initialize(
+            context = this,
+            config = Configuration(
+                apiKey = "YOUR_API_KEY", // connector token, sent as X-Token
+                webrtcToken = "YOUR_WEBRTC_TOKEN", // the connector's WebRTC token (distinct from apiKey)
+            ),
+        )
+    }
 }
+```
+
+### Build the call — `PolyVoice.call(...)`
+
+Nothing left to configure — `call(context)` alone reads what `initialize(...)` already stored:
+
+```kotlin
+private val call by lazy { PolyVoice.call(this) }
 
 // (the real onDestroy also stops the foreground service — see "Survive the background" below)
 override fun onDestroy() { super.onDestroy(); call.close() }
@@ -170,7 +184,9 @@ The required manifest entries (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MICROPH
 
 You need **two credentials**, both on your agent in **[Agent Studio](https://studio.poly.ai) › Connector
 Settings**: the **API key** (connector token, `Configuration.apiKey` → `X-Token`) and the **WebRTC token**
-(`VoiceOptions.webrtcToken`). Set them in the `PolyVoice.call(...)` block at the top of `CallActivity.kt`.
+(`Configuration.webrtcToken`). Set them once in
+[`VoiceApplication.kt`](src/main/kotlin/ai/poly/examples/voice/views/VoiceApplication.kt)'s
+`PolyMessaging.initialize(...)` call.
 
 The other two values have sensible defaults, so most agents leave them alone: `environment` defaults to
 **`Environment.US`** (add `environment = Environment.UK / .EUW / .cluster("…")` for another region), and

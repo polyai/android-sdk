@@ -4,6 +4,8 @@ package ai.poly.voice
 
 import ai.poly.messaging.Configuration
 import ai.poly.messaging.PolyError
+import ai.poly.messaging.PolyMessaging
+import ai.poly.messaging.internal.PolyVoiceInternalApi
 import ai.poly.voice.internal.VoiceHosts
 import ai.poly.voice.internal.adapters.AndroidAudioControl
 import ai.poly.voice.internal.adapters.AndroidLogLogger
@@ -24,14 +26,17 @@ import kotlinx.coroutines.SupervisorJob
  * Entry point for WebRTC voice calling — the `ai.poly:voice` companion to `ai.poly:messaging`.
  *
  * ```kotlin
- * val call = PolyVoice.call(
- *     context,
- *     Configuration(apiKey = "…", environment = Environment.cluster("dev")),
- *     VoiceOptions(webrtcToken = "…"), // the connector's WebRTC token (distinct from apiKey)
- * )
+ * // At launch — sets both tokens once (webrtcToken is only needed for voice):
+ * PolyMessaging.initialize(context, Configuration(apiKey = "…", webrtcToken = "…"))
+ *
+ * // Elsewhere — no config to pass, same pattern as PolyMessaging.chat()/voice():
+ * val call = PolyVoice.call(context)
  * // observe call.state for Connected / Failed
  * call.start() // after the RECORD_AUDIO runtime permission is granted
  * ```
+ *
+ * Need a different connector than the one `initialize(...)` set? Pass a `Configuration` explicitly
+ * instead: `call(context, config, options)`.
  *
  * Reuses the messaging `Configuration` (api key, environment, host identifier, log level). Each call
  * is self-contained — it creates its own session, independent of any active chat.
@@ -42,26 +47,31 @@ public object PolyVoice {
      * Build a `VoiceCall` for the given `config`. Does not start it — observe `VoiceCall.state` and
      * call `VoiceCall.start`.
      *
-     * @param options call options — `VoiceOptions.webrtcToken` (the connector's WebRTC token) is
-     *   required. With `Environment.Custom`, also set `VoiceOptions.signalingHost` or this throws
-     *   `PolyError.InvalidConfiguration`.
+     * @param options call options. The web calling token comes from `config.webrtcToken`.
+     *   Defaults to `VoiceOptions()`, so `call(context, config)` alone works when the token is set.
+     *   With `Environment.Custom`, also set
+     *   `VoiceOptions.signalingHost` or this throws `PolyError.InvalidConfiguration`.
+     * @throws PolyError.InvalidConfiguration if `apiKey` or `webrtcToken` is blank, or the
+     *   environment is `Environment.Custom` without
+     *   `VoiceOptions.signalingHost`.
      */
     @JvmStatic
+    @JvmOverloads
     public fun call(
         context: Context,
         config: Configuration,
-        options: VoiceOptions,
+        options: VoiceOptions = VoiceOptions(),
     ): VoiceCall {
         if (config.apiKey.isBlank()) throw PolyError.InvalidConfiguration("apiKey must not be blank")
-        if (options.webrtcToken.isBlank()) throw PolyError.InvalidConfiguration("VoiceOptions.webrtcToken must not be blank")
+        val bridgeToken = config.webrtcToken
+        if (bridgeToken.isNullOrBlank()) {
+            throw PolyError.InvalidConfiguration("Configuration.webrtcToken must not be blank")
+        }
 
         val app = context.applicationContext
         val logger = AndroidLogLogger(config.logLevel)
         val hosts = VoiceHosts(config.environment, options.signalingHost)
         val hostId = config.hostIdentifier ?: app.packageName
-        // The bridge authenticates provision with the connector's WebRTC token — always a distinct
-        // value from the API key.
-        val bridgeToken = options.webrtcToken
         // device_type mirrors the chat SDK's detection (smallestScreenWidthDp >= 600 ⇒ tablet) so voice
         // and chat report the same dimension on session create.
         val deviceType = if (app.resources.configuration.smallestScreenWidthDp >= 600) "tablet" else "mobile"
@@ -110,4 +120,17 @@ public object PolyVoice {
             },
         )
     }
+
+    /**
+     * Same as `call(context, config, options)`, but reads the `Configuration` from
+     * `PolyMessaging.initialize(context, config)` instead of taking one — the
+     * `PolyMessaging.chat()` / `PolyMessaging.voice()` pattern. Requires `initialize` to have been
+     * called first (crashes otherwise, same contract as those two), with
+     * `Configuration.webrtcToken` set.
+     */
+    @OptIn(PolyVoiceInternalApi::class)
+    @JvmStatic
+    @JvmOverloads
+    public fun call(context: Context, options: VoiceOptions = VoiceOptions()): VoiceCall =
+        call(context, PolyMessaging.currentConfig(), options)
 }
