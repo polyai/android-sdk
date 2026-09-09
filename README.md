@@ -55,7 +55,7 @@ Then declare the dependency — the three forms below are equivalent (same artif
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("ai.poly:messaging:0.9.0")
+    implementation("ai.poly:messaging:0.10.0")
 }
 ```
 
@@ -64,7 +64,7 @@ dependencies {
 ```groovy
 // build.gradle
 dependencies {
-    implementation 'ai.poly:messaging:0.9.0'
+    implementation 'ai.poly:messaging:0.10.0'
 }
 ```
 
@@ -72,7 +72,7 @@ dependencies {
 
 ```toml
 [versions]
-polyMessaging = "0.9.0"
+polyMessaging = "0.10.0"
 
 [libraries]
 poly-messaging = { module = "ai.poly:messaging", version.ref = "polyMessaging" }
@@ -119,7 +119,7 @@ class HelloApplication : Application() {
 > top of `MainActivity.onCreate()` (simplest; it re-runs on activity recreation, so prefer
 > `Application.onCreate()` for real apps).
 
-> **Quick-start dependencies.** Beyond the SDK itself (`implementation("ai.poly:messaging:0.9.0")`), the
+> **Quick-start dependencies.** Beyond the SDK itself (`implementation("ai.poly:messaging:0.10.0")`), the
 > only line a Compose app must add for the snippet below is **lifecycle-runtime-compose** (for
 > `collectAsStateWithLifecycle`):
 >
@@ -1788,8 +1788,8 @@ SDK — it reuses the same `Configuration`:
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("ai.poly:messaging:0.9.0")
-    implementation("ai.poly:voice:0.9.0")
+    implementation("ai.poly:messaging:0.10.0")
+    implementation("ai.poly:voice:0.10.0")
 }
 ```
 
