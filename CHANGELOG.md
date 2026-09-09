@@ -6,6 +6,8 @@ is pre-1.0, breaking changes bump the **minor** version.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-09
+
 ### Changed
 - **Breaking:** the WebRTC token has moved from `VoiceOptions.webrtcToken` to
   `Configuration.webrtcToken`, so both connector credentials are configured together. Set both once
