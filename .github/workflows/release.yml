@@ -17,7 +17,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
       - name: Publish to Maven Central (Sonatype Central Portal)
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --stacktrace
         env:

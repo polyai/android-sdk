@@ -41,7 +41,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       # setup-gradle v4 auto-validates the wrapper and caches Gradle.
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
       - name: Build, lint, test, apiCheck
         run: ./gradlew build test lint apiCheck --stacktrace
 
@@ -58,6 +58,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
       - name: Assemble all sample modules
         run: ./gradlew assembleDebug --stacktrace || echo "No sample modules yet (M4/M5)."
