@@ -13,8 +13,8 @@ same `CallState` / `PolyError.Voice` / `Environment` vocabulary — no new conce
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("ai.poly:messaging:0.10.0")
-    implementation("ai.poly:voice:0.10.0")
+    implementation("ai.poly:messaging:0.11.0")
+    implementation("ai.poly:voice:0.11.0")
 }
 ```
 
