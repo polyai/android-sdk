@@ -10,61 +10,225 @@ same `CallState` / `PolyError.Voice` / `Environment` vocabulary — no new conce
 
 ## Install
 
+The `0.11.0` artifacts are compiled with Kotlin 2.4. In a fresh Android Studio project, first set the
+Kotlin plugin to 2.4.10 (or newer):
+
+```toml
+# gradle/libs.versions.toml
+[versions]
+kotlin = "2.4.10"
+```
+
+Then add these three lines to the app module—not the top-level project file:
+
 ```kotlin
-// build.gradle.kts
+// app/build.gradle.kts
 dependencies {
     implementation("ai.poly:messaging:0.11.0")
     implementation("ai.poly:voice:0.11.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
 }
 ```
 
-## Quickstart
+`mavenCentral()` is already present in new Android Studio projects. If your project removed it, restore
+it under `dependencyResolutionManagement.repositories` in `settings.gradle.kts`.
 
-The call needs the **`RECORD_AUDIO`** runtime permission. The SDK declares it in its manifest, but —
-like any dangerous permission — your app must request the grant from the user before starting a call.
+## Quick start
+
+The following is a complete foreground-only calling app for the current Android Studio **Empty
+Activity** Compose template. Create a project with minimum SDK 24 or newer, update Kotlin and add the
+dependencies above, then replace the generated activity as described below. No manifest changes or
+extra application class are needed for this first call.
+
+### Paste one file — `MainActivity.kt`
+
+Open the `MainActivity.kt` Android Studio generated. Keep its first `package …` line, delete
+**everything below that line**, and paste the block below directly after it. The block deliberately
+uses no project-specific package, theme, or resource names.
+
+Replace the two credential placeholders, run on a physical device, tap **Start call**, and allow
+microphone access. Both credentials come from **Agent Studio › Connector Settings** and are required
+and distinct.
+
+> This first call intentionally works only while the app is in the foreground. Once it works, add the
+> [foreground service](#backgrounding--foreground-service) before testing background calls.
 
 ```kotlin
+// Paste below the package line already in your MainActivity.kt.
 import ai.poly.messaging.Configuration
 import ai.poly.messaging.PolyMessaging
+import ai.poly.messaging.voice.CallState
 import ai.poly.voice.PolyVoice
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 
-// At launch — sets both tokens once (webrtcToken is only needed for voice):
-PolyMessaging.initialize(
-    context,
-    Configuration(apiKey = "YOUR_API_KEY", webrtcToken = "YOUR_WEBRTC_TOKEN"), // both from Agent Studio › Connector Settings
-)
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-// Elsewhere — no config to pass, same pattern as PolyMessaging.chat()/voice():
-val call = PolyVoice.call(context)
+        // For this quick test, initialize before Compose creates the VoiceCall.
+        PolyMessaging.initialize(
+            context = this,
+            config = Configuration(
+                apiKey = "YOUR_CONNECTOR_TOKEN",
+                webrtcToken = "YOUR_WEB_CALLING_TOKEN",
+            ),
+        )
 
-// Observe the call lifecycle (Idle → Connecting → Connected → Ended / Failed).
-lifecycleScope.launch {
-    repeatOnLifecycle(Lifecycle.State.STARTED) {
-        call.state.collect { state ->
-            when (state) {
-                is CallState.Connected -> showInCallUi()
-                is CallState.Failed -> showError(state.error)   // a PolyError.Voice
-                is CallState.Ended -> dismissInCallUi()
-                else -> Unit
+        setContent {
+            MaterialTheme {
+                Surface(Modifier.fillMaxSize()) { CallScreen() }
             }
         }
     }
 }
 
-// After RECORD_AUDIO is granted:
-lifecycleScope.launch { call.start() }   // suspends until the call is connecting; throws on setup failure
+@Composable
+private fun CallScreen() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val call = remember { PolyVoice.call(context.applicationContext) }
+    val state by call.state.collectAsStateWithLifecycle()
+    var muted by remember { mutableStateOf(false) }
+    var permissionDenied by remember { mutableStateOf(false) }
 
-// In-call controls:
-call.setMuted(true)   // mute the mic
-call.end()            // hang up and release the mic
+    DisposableEffect(call) {
+        onDispose { call.close() }
+    }
+
+    fun startCall() {
+        permissionDenied = false
+        muted = false
+        scope.launch { runCatching { call.start() } }
+    }
+
+    val requestMicrophone = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) startCall() else permissionDenied = true
+    }
+
+    fun toggleCall() {
+        when (state) {
+            is CallState.Connecting, is CallState.Connected -> scope.launch { call.end() }
+            else -> {
+                val granted = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO,
+                ) == PackageManager.PERMISSION_GRANTED
+                if (granted) startCall()
+                else requestMicrophone.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        }
+    }
+
+    val status = if (permissionDenied) {
+        "Microphone permission is required"
+    } else {
+        when (val current = state) {
+            is CallState.Idle -> "Tap to call the agent"
+            is CallState.Connecting -> "Connecting…"
+            is CallState.Connected -> "Connected — say hello 👋"
+            is CallState.Ended -> "Call ended"
+            is CallState.Failed -> "Failed: ${current.error.message}"
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text("PolyAI Voice", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = status,
+            color = if (state is CallState.Failed || permissionDenied) Color.Red else Color.Unspecified,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(32.dp))
+        Button(
+            onClick = ::toggleCall,
+            enabled = state !is CallState.Connecting,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+        ) {
+            Text(if (state is CallState.Connected) "End call" else "Start call")
+        }
+        if (state is CallState.Connected) {
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = {
+                    muted = !muted
+                    scope.launch { call.setMuted(muted) }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (muted) "Unmute" else "Mute")
+            }
+        }
+    }
+}
 ```
 
-`CallState`, `PolyError.Voice.*`, `Configuration`, and `Environment` are the same types from
-`ai.poly:messaging` — no new vocabulary. Java callers get `Executor` + `Callback<Unit>` overloads of
-`start` / `end` / `setMuted`, mirroring the chat API.
+The SDK's manifest automatically contributes `INTERNET`, `ACCESS_NETWORK_STATE`, and `RECORD_AUDIO`,
+so the generated app manifest stays unchanged. The activity still has to request the dangerous
+`RECORD_AUDIO` permission at runtime; the pasted code does that before `start()`.
 
-Need a different connector than the one `initialize(...)` set? Pass a `Configuration` explicitly
-instead: `PolyVoice.call(context, config, options)`.
+The screen holds one `VoiceCall`, observes `call.state`, and calls `close()` when it leaves the
+composition. The visible lifecycle is `Idle → Connecting → Connected → Ended` or `Failed`; `start()`
+returning means setup is underway, not that the call is already connected.
+
+For a production app, move `PolyMessaging.initialize(...)` to your `Application.onCreate()` so it
+runs once per process. Keeping it in the activity is intentional here: it makes the first test a
+single-file paste, though it runs again if Android recreates the activity.
+
+### Sync and run
+
+Click **Sync Project with Gradle Files**, select a physical Android device, and run the app. The first
+tap asks for microphone access; after granting it, the status should move through **Connecting** to
+**Connected**.
+
+If Gradle reports `Unresolved reference 'implementation'`, the dependency lines were added to the
+top-level `build.gradle.kts`; move them into `app/build.gradle.kts` inside its `dependencies` block.
+If it reports incompatible Kotlin metadata version `2.4.0`, update the Kotlin version in
+`gradle/libs.versions.toml` as shown under [Install](#install), then sync again.
+
+`CallState`, `PolyError.Voice.*`, `Configuration`, and `Environment` are shared with
+`ai.poly:messaging`. Need a different connector for one call? Pass a `Configuration` explicitly:
+`PolyVoice.call(context, config)`.
 
 ## Permissions
 
