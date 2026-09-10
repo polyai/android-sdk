@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/polyai/android-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/polyai/android-sdk/actions/workflows/ci.yml)
 ![API](https://img.shields.io/badge/API-24%2B-blue)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.2%2B-blueviolet)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.4%2B-blueviolet)
 ![Maven Central](https://img.shields.io/badge/Maven%20Central-ai.poly%3Amessaging-orange)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue)
 [![Develop with Claude Code](https://img.shields.io/badge/Develop%20with-Claude%20Code-d97757)](https://claude.ai/download)
