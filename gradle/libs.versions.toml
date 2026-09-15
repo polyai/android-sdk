@@ -3,7 +3,7 @@
 agp = "8.13.0"
 kotlin = "2.4.10"
 coroutines = "1.10.2"
-okhttp = "5.4.0"
+okhttp = "5.5.0"
 # libwebrtc, the maintained webrtc-sdk fork (Google's org.webrtc:google-webrtc is abandoned;
 # package stays org.webrtc.*). Used only by :polyvoice for on-device audio calling.
 webrtc = "144.7559.09"
