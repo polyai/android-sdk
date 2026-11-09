@@ -18,15 +18,20 @@ import ai.poly.messaging.internal.wire.firstString
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import okhttp3.Call
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import okio.Buffer
 import org.json.JSONObject
 import java.io.IOException
 import java.util.UUID
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Two-step REST auth (`POST /api/v1/access-token` → `POST /api/v1/sessions`) over OkHttp,
@@ -139,19 +144,56 @@ internal class OkHttpRestApi(
         throw PolyError.Session.SessionCreationFailed(code)
     }
 
+    override suspend fun submitVerifiedContext(
+        accessToken: String,
+        sessionId: String,
+        token: String,
+        notifyAgent: Boolean,
+    ): Unit = withContext(io) {
+        val payload = JSONObject().put("token", token)
+        if (notifyAgent) payload.put("notify_agent", true)
+        val req = Request.Builder()
+            .url("$baseUrl/sessions/$sessionId/context")
+            .header("Accept", "application/json")
+            .header("Authorization", "Bearer $accessToken")
+            .header("User-Agent", "PolyMessaging-Android/$version (Android; ${android.os.Build.VERSION.RELEASE})")
+            .header("X-Polyai-Correlation-Id", UUID.randomUUID().toString())
+            .post(payload.toString().toRequestBody(JSON))
+            .build()
+        val resp = try {
+            execute(req, "sessions/context", logBody = false) // the body carries the signed token
+        } catch (e: PolyError) {
+            throw PolyError.VerifiedContext.SubmitFailed(e.message.orEmpty())
+        }
+        if (resp.code !in 200..299) throw contextError(resp)
+    }
+
+    /** 401 / 403 = token rejected, 400 / 413 = refused before the check. */
+    private fun contextError(resp: Http): PolyError.VerifiedContext {
+        val message = runCatching { JSONObject(resp.body) }.getOrNull()
+            ?.firstString("message", "error")?.takeIf { it.isNotEmpty() }
+            ?: "HTTP ${resp.code}"
+        return when (resp.code) {
+            401, 403 -> PolyError.VerifiedContext.VerificationFailed(message)
+            400, 413 -> PolyError.VerifiedContext.InvalidToken(message)
+            else -> PolyError.VerifiedContext.SubmitFailed(message)
+        }
+    }
+
     // ─── retrying executor with request/response logging ──────────
 
     private data class Http(val code: Int, val body: String)
 
     /** Executes with retry: network IOException + 5xx + 429 (Retry-After) retried up to [MAX_RETRIES];
-     *  4xx is terminal. Logs each request/response (curl-equivalent). */
-    private suspend fun execute(req: Request, endpoint: String): Http {
+     *  4xx is terminal. Logs each request/response (curl-equivalent).
+     *  Cancelling the caller aborts the in-flight call. */
+    private suspend fun execute(req: Request, endpoint: String, logBody: Boolean = true): Http {
         var attempt = 0
         while (true) {
-            logRequest(req, endpoint, attempt)
+            logRequest(req, endpoint, attempt, logBody)
             val started = System.nanoTime()
             val response = try {
-                client.newCall(req).execute()
+                client.newCall(req).await()
             } catch (io: IOException) {
                 if (attempt >= MAX_RETRIES) throw networkError(io)
                 logger.w("Network error, attempt ${attempt + 1}/${MAX_RETRIES + 1}", mapOf("endpoint" to endpoint, "error" to (io.message ?: "")))
@@ -184,13 +226,26 @@ internal class OkHttpRestApi(
         }
     }
 
+    private suspend fun Call.await(): Response = suspendCancellableCoroutine { continuation ->
+        continuation.invokeOnCancellation { cancel() }
+        enqueue(object : okhttp3.Callback {
+            override fun onResponse(call: Call, response: Response) {
+                if (continuation.isActive) continuation.resume(response) else response.close()
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                continuation.resumeWithException(e)
+            }
+        })
+    }
+
     // ─── debug logging (logRequest / logResponse / previewBody) ──
 
-    private fun logRequest(req: Request, endpoint: String, attempt: Int) {
+    private fun logRequest(req: Request, endpoint: String, attempt: Int, logBody: Boolean) {
         val attemptLabel = if (attempt == 0) "" else " attempt=${attempt + 1}/${MAX_RETRIES + 1}"
         logger.d("→ ${req.method} ${req.url}$attemptLabel", mapOf("endpoint" to endpoint))
         req.headers.toList().sortedBy { it.first }.forEach { (name, value) -> logger.d("    $name: $value") }
-        val body = requestBodyString(req)
+        val body = if (logBody) requestBodyString(req) else ""
         if (body.isNotEmpty()) logger.d("    body: ${previewBody(body)}")
     }
 

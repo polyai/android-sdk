@@ -19,6 +19,7 @@ import ai.poly.messaging.internal.services.ConnectionService
 import ai.poly.messaging.internal.services.Coordinator
 import ai.poly.messaging.internal.services.HeartbeatService
 import ai.poly.messaging.internal.services.SessionService
+import ai.poly.messaging.internal.services.VerifiedContextService
 import ai.poly.messaging.voice.PolyCall
 import android.content.Context
 import kotlinx.coroutines.CancellationException
@@ -81,6 +82,13 @@ public class PolyMessagingClient internal constructor(
     public suspend fun end(reason: String? = "user_ended"): Unit = coordinator.end(reason)
 
     /**
+     * Re-run `onContextRequired` and resubmit, e.g. after a mid-chat sign-in. Set [notifyAgent] to
+     * let the agent react. Ignored with no handler, before SESSION_START, or while a request is in flight.
+     */
+    public suspend fun refreshVerifiedContext(notifyAgent: Boolean = false): Unit =
+        coordinator.refreshVerifiedContext(notifyAgent)
+
+    /**
      * Await the initial start, then re-establish the
      * socket if it has terminally failed (reconnect ladder exhausted). `ensureStarted()` only joins
      * the FIRST start — it does not revive a dead connection — so a terminal-error "Try Again" that
@@ -117,6 +125,9 @@ public class PolyMessagingClient internal constructor(
 
     public fun end(executor: Executor, callback: Callback<Unit>): Cancellable =
         runAsync(executor, callback) { end() }
+
+    public fun refreshVerifiedContext(notifyAgent: Boolean, executor: Executor, callback: Callback<Unit>): Cancellable =
+        runAsync(executor, callback) { refreshVerifiedContext(notifyAgent) }
 
     public fun resume(executor: Executor, callback: Callback<Unit>): Cancellable =
         runAsync(executor, callback) { resume() }
@@ -262,6 +273,9 @@ public class PolyMessagingClient internal constructor(
             val coordinator = Coordinator(
                 transport, sessionService, connectionService, chatService, heartbeatService,
                 logger, scope, networkMonitor, appLifecycle, clock,
+                verifiedContextService = config.onContextRequired?.let {
+                    VerifiedContextService(handler = it, api = rest, logger = logger, scope = scope, clock = clock)
+                },
             )
             return PolyMessagingClient(config, coordinator, transport, scope, autoStart)
         }

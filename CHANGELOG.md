@@ -6,6 +6,27 @@ is pre-1.0, breaking changes bump the **minor** version.
 
 ## [Unreleased]
 
+### Added
+- **Verified context — `Configuration.onContextRequired`**. Pass signed customer
+  context (e.g. a customer id) into the conversation so the agent knows who the user is without
+  re-identifying them. At the start of each fresh session the SDK hands your handler
+  `{ sessionId, contextId }`; your backend signs a short-lived JWT (`sub = contextId`) and the
+  handler returns it. The SDK submits it before the agent joins. Same contract as webchat and the
+  iOS SDK. The SDK never signs, decodes or stores the token. Best-effort: the handler is capped at
+  4s and the whole step at 5s, and the agent always joins. Java callers use
+  `Configuration.Builder.onContextRequired(VerifiedContextCallback)`.
+- **`refreshVerifiedContext(notifyAgent)`** on `ChatSession` and `PolyMessagingClient` — re-run the
+  handler mid-conversation (e.g. after sign-in) and resubmit; `notifyAgent = true` lets the agent
+  react to the change.
+- `ChatSession.verifiedContext` / `MessagingEvent.VerifiedContext(status)` report the outcome:
+  `Set`, `Declined`, or `Failed(PolyError.VerifiedContext)` with `CallbackTimedOut`,
+  `CallbackFailed`, `InvalidToken`, `VerificationFailed` or `SubmitFailed`.
+- `SessionStartPayload.contextId`.
+
+### Changed
+- **Breaking:** new `MessagingEvent.VerifiedContext` and `PolyError.VerifiedContext` subclasses.
+  Exhaustive `when`s over either sealed type need a new branch (or an `else`).
+
 ## [0.11.0] - 2026-09-09
 
 ### Changed

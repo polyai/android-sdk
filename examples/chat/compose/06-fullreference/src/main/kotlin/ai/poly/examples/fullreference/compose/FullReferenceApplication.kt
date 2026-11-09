@@ -18,6 +18,8 @@ class FullReferenceApplication : Application() {
             config = Configuration(
                 apiKey = API_KEY,
                 environment = Environment.US,
+                // Verified context: add `onContextRequired = { request -> yourBackend.sign(request.contextId) }`.
+                // See "Verified context" in the README.
             ),
         )
     }

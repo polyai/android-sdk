@@ -27,6 +27,7 @@ Reference: [Configuration](#configuration) · [Error handling](#error-handling) 
 | ⚡ | Streaming | Real-time chunks, rendered token-by-token |
 | 🔄 | Reconnection | Backoff + jitter, session resume, drops dead sockets when the OS reports offline |
 | 🔐 | Auth | Token acquisition, session lifecycle, fully managed |
+| 🪪 | Verified context | Your backend signs who the user is; the agent knows from turn 1 ([`onContextRequired`](#verified-context-oncontextrequired)) |
 | 👤 | Live agent | Handoff, queue status, typing |
 | 💡 | Suggestions | Quick-reply pills |
 | 📎 | Attachments | Images, link cards, CTA phone buttons |
@@ -416,6 +417,7 @@ The SDK is headless: it gives you one observable object — **`ChatSession`** �
 | `hasStarted` | `StateFlow<Boolean>` | the conversation has begun |
 | `hasEnded` | `StateFlow<Boolean>` | conversation is over — swap the composer for a "start new" CTA |
 | `failureReason` | `StateFlow<PolyError?>` | non-null once the chat hits a terminal failure it can't auto-recover from — invalid API key, reconnect budget exhausted, session expired |
+| `verifiedContext` | `StateFlow<VerifiedContextStatus>` | outcome of [`onContextRequired`](#verified-context-oncontextrequired) for this session — never blocks the chat |
 
 **Methods you call:**
 
@@ -424,6 +426,7 @@ The SDK is headless: it gives you one observable object — **`ChatSession`** �
 | `suspend send(text)` | send a user message (optimistic — appears immediately as `Delivery.PENDING`) |
 | `suspend sendTyping()` | tell the agent you're typing (safe every keystroke; throttled) |
 | `suspend end()` | end the conversation |
+| `suspend refreshVerifiedContext(notifyAgent)` | re-sign and resubmit [verified context](#verified-context-oncontextrequired) mid-conversation (e.g. after sign-in) |
 | `removeMessage(draftId)` | drop a failed draft (call before re-sending on retry) |
 | `clearSuggestions(messageId)` | clear one message's quick-reply pills (takes the message's `UUID` `id`) |
 | `clearChat()` | wipe the transcript (e.g. before `startNewSession()`) |
@@ -1314,6 +1317,75 @@ The session-level `agentAvatarUrl` (a `StateFlow<URI?>`) is the latest avatar �
 
 *Example app:* [05-Handoff (Compose)](examples/chat/compose/05-handoff/) · [05-Handoff (Views)](examples/chat/views/05-handoff/).
 
+## Verified context (`onContextRequired`)
+
+Pass signed customer context — a customer id, an account tier — into the conversation so the agent knows who the user is without asking. The agent's functions read it as `conv.verified_context`.
+
+The signing key never touches the app. Get a signing key (`key_id` + secret) for your project from PolyAI, keep the secret on **your** server, and have the app ask your server for a token:
+
+```kotlin
+PolyMessaging.initialize(
+    context,
+    Configuration(
+        apiKey = "YOUR_API_KEY",
+        onContextRequired = { request ->
+            // Your backend signs a JWT with sub = request.contextId. Return null to skip.
+            myBackend.signPolyContext(contextId = request.contextId)
+        },
+    ),
+)
+```
+
+From Java, complete a `Callback` through the builder:
+
+```java
+new Configuration.Builder("YOUR_API_KEY")
+    .onContextRequired((request, result) -> myBackend.sign(request.contextId, result)) // result.onSuccess(jwtOrNull) / result.onError(t)
+    .build();
+```
+
+**Token your backend signs** (the SDK never decodes or stores it):
+
+```json
+{ "alg": "HS256", "typ": "JWT", "kid": "<key_id>" }
+{ "sub": "<contextId>", "iat": 1779454602, "exp": 1779454632,
+  "ctx": { "customer_id": "usr_12345", "account_tier": "premium", "is_premium": true } }
+```
+
+`exp − iat` ≤ 30 s; `ctx` is a flat object of strings, numbers, booleans or `null`, ≤ 8 KB. The HMAC key is the secret string exactly as the API returned it (don't hex-decode it).
+
+**When it runs:** once per fresh session, after `SESSION_START` and before the agent joins, so the agent has the context on its first turn. It doesn't run on resume (the context was set when the session started) or on a reconnect.
+
+**It never blocks the chat.** The SDK waits at most 4 s for your handler and 5 s for the whole step. Whatever happens, the agent joins. Check the outcome on `session.verifiedContext`:
+
+```kotlin
+when (val status = session.verifiedContext.value) {
+    is VerifiedContextStatus.Failed -> analytics.track("verified_context_failed", status.reason.debugDescription)
+    is VerifiedContextStatus.Declined -> {} // handler returned null
+    else -> {}                              // Idle, Pending, Set
+}
+```
+
+| `VerifiedContextStatus.Failed` reason | Meaning |
+|---|---|
+| `PolyError.VerifiedContext.CallbackTimedOut` | your handler took longer than 4 s |
+| `PolyError.VerifiedContext.CallbackFailed(reason)` | your handler threw |
+| `PolyError.VerifiedContext.VerificationFailed(reason)` | PolyAI rejected the token: bad signature, unknown `kid`, expired, malformed claims or `ctx`, or `sub` ≠ `contextId` (HTTP 401 / 403). Carries the server's reason, e.g. `"unknown signing key"`. A reason of `"Invalid access token"` means the session's own access token was rejected, not your signing |
+| `PolyError.VerifiedContext.InvalidToken(reason)` | the request was refused before the token was checked, e.g. missing token or oversized body (HTTP 400 / 413) |
+| `PolyError.VerifiedContext.SubmitFailed(reason)` | network error, server error, or the 5 s budget ran out |
+
+**Refreshing mid-conversation.** When who the user is changes partway through — they sign in, or upgrade — re-run the same handler against the live session:
+
+```kotlin
+auth.signIn()
+session.refreshVerifiedContext()                    // store quietly
+session.refreshVerifiedContext(notifyAgent = true)  // or: let the agent react to the change
+```
+
+Your handler gets the same `contextId`, signs a fresh token, and it replaces the stored context in full. It doesn't hold anything up — the agent is already in the conversation. It's ignored (not queued) when no handler is configured, before `SESSION_START`, or while a request is already in flight; the outcome lands on `session.verifiedContext` as before.
+
+Same contract as the webchat `WebchatAPI.onContextRequired` callback and the iOS SDK.
+
 ## Side effects: `client.events`
 
 Rendering reads `messages`. For **imperative reactions** — navigate, fire a haptic, log analytics — observe the typed event stream instead. (This is the lower-level API `ChatSession` is built on; reach for it only for side effects.) `client.events` is a `SharedFlow<MessagingEvent>`, so observing it is **multicast** and doesn't disturb the `ChatSession` driving your UI.
@@ -1574,6 +1646,7 @@ PolyMessaging.initialize(context, Configuration(apiKey = "YOUR_API_KEY"))
 | `sessionTimeoutSeconds` | `null` (600) | Reserved — currently ignored; the SDK fixes the idle-timeout at 600 s (the backend's 10-min WebSocket idle timeout) |
 | `maxReconnectAttempts` | `null` (10) | Override the reconnect cap |
 | `webrtcToken` | `null` | The web calling token for [`PolyVoice`](#voice-calling-aipolyvoice) — set it here once instead of repeating it at every `PolyVoice.call(...)` site. Ignored by chat; `null` if this app doesn't place calls |
+| `onContextRequired` | `null` | Returns a signed JWT so the agent knows who the user is. See [Verified context](#verified-context-oncontextrequired). `null` skips the step with zero delay |
 
 **Environments:**
 
@@ -1611,6 +1684,7 @@ PolyMessaging.initialize(
         sessionTimeoutSeconds = 600,             // reserved — currently ignored; idle timeout is fixed at 600 s
         maxReconnectAttempts = 10,               // reconnect budget before Failed
         webrtcToken = null,                      // set if this app also calls PolyVoice — see below
+        onContextRequired = null,                // signed customer context — see "Verified context"
     ),
 )
 ```
@@ -1627,6 +1701,7 @@ Configuration config = new Configuration.Builder("YOUR_API_KEY")
     .sessionTimeoutSeconds(600)                // reserved — currently ignored; idle timeout is fixed at 600 s
     .maxReconnectAttempts(10)
     .webrtcToken(null)                         // set if this app also calls PolyVoice — see below
+    .onContextRequired(null)                   // signed customer context — see "Verified context"
     .build();
 PolyMessaging.initialize(context, config);
 ```
@@ -1670,6 +1745,7 @@ Every case `PolyError` can throw, and when:
 | `PolyError.Message.DeliveryFailed(draftId)` | a sent message never confirmed after retries | no |
 | `PolyError.Message.PayloadTooLarge(maxBytes)` | the message exceeds `max_message_size_bytes` | no |
 | `PolyError.Transport.NetworkError(detail)` · `PolyError.Transport.ProtocolError(reason)` | a network / protocol-level failure | yes |
+| `PolyError.VerifiedContext` | never thrown — reported via `session.verifiedContext` (see [Verified context](#verified-context-oncontextrequired)) | — |
 | `PolyError.InvalidConfiguration(detail)` | bad `Configuration` (e.g. empty token) | no |
 
 Convenience flags: `isAuthError`, `isSessionError`, `isTransportError`, `isSessionExpired`, `isRetryable`. Every case also exposes a `debugDescription` for logging.

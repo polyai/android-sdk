@@ -34,6 +34,8 @@ public class Configuration @JvmOverloads constructor(
      * itself never reads it. Chat-only apps leave this `null`.
      */
     @JvmField public val webrtcToken: String? = null,
+    /** Supplies a JWT signed by your backend at the start of each fresh session. `null` skips the step. */
+    @JvmField public val onContextRequired: VerifiedContextHandler? = null,
 ) {
     /** Java-friendly builder. Kotlin callers can use the primary constructor instead. */
     public class Builder(private val apiKey: String) {
@@ -45,6 +47,7 @@ public class Configuration @JvmOverloads constructor(
         private var sessionTimeoutSeconds: Int? = null
         private var maxReconnectAttempts: Int? = null
         private var webrtcToken: String? = null
+        private var onContextRequired: VerifiedContextHandler? = null
 
         public fun environment(value: Environment): Builder = apply { environment = value }
         public fun hostIdentifier(value: String?): Builder = apply { hostIdentifier = value }
@@ -54,6 +57,12 @@ public class Configuration @JvmOverloads constructor(
         public fun sessionTimeoutSeconds(value: Int?): Builder = apply { sessionTimeoutSeconds = value }
         public fun maxReconnectAttempts(value: Int?): Builder = apply { maxReconnectAttempts = value }
         public fun webrtcToken(value: String?): Builder = apply { webrtcToken = value }
+
+        @JvmSynthetic
+        public fun onContextRequired(value: VerifiedContextHandler?): Builder = apply { onContextRequired = value }
+
+        /** Java-friendly form of [Configuration.onContextRequired]. */
+        public fun onContextRequired(value: VerifiedContextCallback?): Builder = apply { onContextRequired = value?.asHandler() }
 
         public fun build(): Configuration = Configuration(
             apiKey = apiKey,
@@ -65,6 +74,7 @@ public class Configuration @JvmOverloads constructor(
             sessionTimeoutSeconds = sessionTimeoutSeconds,
             maxReconnectAttempts = maxReconnectAttempts,
             webrtcToken = webrtcToken,
+            onContextRequired = onContextRequired,
         )
     }
 }

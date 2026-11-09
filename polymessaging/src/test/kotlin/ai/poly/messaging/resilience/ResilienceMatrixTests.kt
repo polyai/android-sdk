@@ -211,4 +211,6 @@ private class FailableRestApi : RestApiPort {
         createCalls++
         return CreatedSession(sessionId = "sess-1", accessToken = token)
     }
+
+    override suspend fun submitVerifiedContext(accessToken: String, sessionId: String, token: String, notifyAgent: Boolean) {}
 }

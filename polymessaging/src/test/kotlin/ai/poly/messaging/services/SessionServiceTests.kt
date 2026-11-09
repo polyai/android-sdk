@@ -209,4 +209,6 @@ private class TokenFailingRestApi : RestApiPort {
         createCalls++
         throw IllegalStateException("createSession must not be reached when the token step fails")
     }
+
+    override suspend fun submitVerifiedContext(accessToken: String, sessionId: String, token: String, notifyAgent: Boolean) {}
 }

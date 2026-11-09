@@ -19,6 +19,8 @@ public class SessionCapabilities internal constructor(
 
 public class SessionStartPayload internal constructor(
     @JvmField public val capabilities: SessionCapabilities,
+    /** The `sub` of the verified-context JWT your backend signs. */
+    @JvmField public val contextId: String? = null,
 )
 
 public class SessionEndPayload internal constructor(

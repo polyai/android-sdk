@@ -124,6 +124,38 @@ public sealed class PolyError(message: String) : Exception(message) {
         public object TimedOut : Voice("Voice call timed out.")
     }
 
+    /** Reported via [VerifiedContextStatus.Failed]; never thrown to callers and never terminal. */
+    public sealed class VerifiedContext(message: String) : PolyError(message) {
+        public object CallbackTimedOut : VerifiedContext("Verified context handler timed out.")
+
+        public class CallbackFailed(@JvmField public val reason: String) :
+            VerifiedContext(if (reason.isEmpty()) "Verified context handler failed." else "Verified context handler failed: $reason") {
+            override fun equals(other: Any?): Boolean = this === other || (other is CallbackFailed && reason == other.reason)
+            override fun hashCode(): Int = reason.hashCode()
+        }
+
+        /** HTTP 400 / 413: refused before the token was checked. */
+        public class InvalidToken(@JvmField public val reason: String) :
+            VerifiedContext(if (reason.isEmpty()) "Verified context request was invalid." else "Verified context request was invalid: $reason") {
+            override fun equals(other: Any?): Boolean = this === other || (other is InvalidToken && reason == other.reason)
+            override fun hashCode(): Int = reason.hashCode()
+        }
+
+        /** HTTP 401 / 403: the token was rejected. "Invalid access token" means the session's token, not your JWT. */
+        public class VerificationFailed(@JvmField public val reason: String) :
+            VerifiedContext(if (reason.isEmpty()) "Verified context token failed verification." else "Verified context token failed verification: $reason") {
+            override fun equals(other: Any?): Boolean = this === other || (other is VerificationFailed && reason == other.reason)
+            override fun hashCode(): Int = reason.hashCode()
+        }
+
+        /** Network error, server error, or the 5s budget ran out. */
+        public class SubmitFailed(@JvmField public val reason: String) :
+            VerifiedContext(if (reason.isEmpty()) "Couldn't submit verified context." else "Couldn't submit verified context: $reason") {
+            override fun equals(other: Any?): Boolean = this === other || (other is SubmitFailed && reason == other.reason)
+            override fun hashCode(): Int = reason.hashCode()
+        }
+    }
+
     /** Bad configuration (e.g. empty API key). */
     public class InvalidConfiguration(@JvmField public val detail: String) :
         PolyError(if (detail.isEmpty()) "Invalid configuration." else "Invalid configuration: $detail") {
@@ -171,6 +203,11 @@ public sealed class PolyError(message: String) : Exception(message) {
             is Voice.Disconnected -> "voice(disconnected)"
             is Voice.Interrupted -> "voice(interrupted)"
             is Voice.TimedOut -> "voice(timedOut)"
+            is VerifiedContext.CallbackTimedOut -> "verifiedContext(callbackTimedOut)"
+            is VerifiedContext.CallbackFailed -> "verifiedContext(callbackFailed($reason))"
+            is VerifiedContext.InvalidToken -> "verifiedContext(invalidToken($reason))"
+            is VerifiedContext.VerificationFailed -> "verifiedContext(verificationFailed($reason))"
+            is VerifiedContext.SubmitFailed -> "verifiedContext(submitFailed($reason))"
             is InvalidConfiguration -> "invalidConfiguration($detail)"
         }
 }
