@@ -19,6 +19,11 @@ public interface Callback<T> {
     public fun onError(error: Throwable)
 }
 
+/** Java form of `Configuration.onContextRequired`. Complete [result] with a signed JWT, or `null` to skip, on any thread. */
+public fun interface VerifiedContextCallback {
+    public fun onContextRequired(request: VerifiedContextRequest, result: Callback<String?>)
+}
+
 /** Java-friendly listener for the typed event stream (`client.events`). */
 public fun interface EventListener {
     public fun onEvent(event: MessagingEvent)

@@ -63,6 +63,13 @@ internal class FakeRestApi(
     var tokenCalls = 0
     var createCalls = 0
     var lastContext: SessionCreateContext? = null
+    var nextSessionId: String = "sess-1"
+    var nextWasResumed: Boolean = false
+
+    class SubmittedContext(val accessToken: String, val sessionId: String, val token: String, val notifyAgent: Boolean)
+    val submittedContexts = mutableListOf<SubmittedContext>()
+    var submitContextError: Throwable? = null
+    var submitContextDelayMs: Long = 0L
 
     override suspend fun obtainAccessToken(): AccessToken {
         tokenCalls++
@@ -80,7 +87,13 @@ internal class FakeRestApi(
         // Mirror the real adapter: an invalid key/host THROWS a connector-validation error (not a flag).
         // SessionService.failState maps the thrown code to hasInvalidApiKey.
         if (invalidKey) throw PolyError.Session.SessionCreationFailed(invalidKeyCode)
-        return CreatedSession(sessionId = "sess-1", accessToken = token)
+        return CreatedSession(sessionId = nextSessionId, accessToken = token, wasResumed = nextWasResumed)
+    }
+
+    override suspend fun submitVerifiedContext(accessToken: String, sessionId: String, token: String, notifyAgent: Boolean) {
+        submittedContexts += SubmittedContext(accessToken, sessionId, token, notifyAgent)
+        if (submitContextDelayMs > 0) kotlinx.coroutines.delay(submitContextDelayMs)
+        submitContextError?.let { throw it }
     }
 
     companion object {

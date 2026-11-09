@@ -14,11 +14,14 @@ import ai.poly.messaging.SessionState
 import ai.poly.messaging.SessionStatus
 import ai.poly.messaging.SystemMessageLevel
 import ai.poly.messaging.TypingState
+import ai.poly.messaging.VerifiedContextRequest
+import ai.poly.messaging.VerifiedContextStatus
 import ai.poly.messaging.internal.helpers.Clock
 import ai.poly.messaging.internal.helpers.d
 import ai.poly.messaging.internal.helpers.e
 import ai.poly.messaging.internal.helpers.i
 import ai.poly.messaging.internal.helpers.w
+import ai.poly.messaging.internal.ports.CreatedSession
 import ai.poly.messaging.internal.ports.ForegroundPort
 import ai.poly.messaging.internal.ports.NetworkStatePort
 import ai.poly.messaging.internal.ports.Transport
@@ -51,6 +54,7 @@ internal class Coordinator(
     private val networkMonitor: NetworkStatePort? = null,
     private val appLifecycle: ForegroundPort? = null,
     private val clock: Clock = Clock.SYSTEM,
+    private val verifiedContextService: VerifiedContextService? = null,
 ) {
     private val _events = MutableSharedFlow<MessagingEvent>(extraBufferCapacity = 256, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val events: SharedFlow<MessagingEvent> = _events.asSharedFlow()
@@ -58,7 +62,7 @@ internal class Coordinator(
     val sessionState: SharedFlow<SessionState> get() = sessionService.state
 
     private var started = false
-    private var agentJoinRequested = false
+    @Volatile private var agentJoinRequested = false
     private var idleTimeoutHandled = false
     private var lastOnline: Boolean? = null
 
@@ -71,6 +75,14 @@ internal class Coordinator(
     private var typingStopJob: Job? = null
     private var lastRefetchAtMillis = 0L
     private var refetchInFlight = false
+
+    @Volatile private var currentSession: CreatedSession? = null
+    @Volatile private var currentContext: VerifiedContextRequest? = null
+
+    /** The session whose once-per-session context step has run, or ran before a resume. */
+    @Volatile private var verifiedContextGatedSessionId: String? = null
+    private val verifiedContextLock = Any()
+    private var verifiedContextInFlightSessionId: String? = null
 
     suspend fun start() {
         if (started) return
@@ -107,8 +119,7 @@ internal class Coordinator(
         // AGENT_JOINED on resume — so we request the join on a fresh session but not on a resume that
         // already includes it (handleBatch; avoids a DUPLICATE greeting).
         agentJoinRequested = false
-        connectionService.setSessionId(created.sessionId)
-        connectionService.setAccessToken(created.accessToken)
+        attachSession(created)
         connectionService.connectNow()
     }
 
@@ -205,10 +216,42 @@ internal class Coordinator(
             _events.tryEmit(MessagingEvent.Disconnected(PolyError.Session.SessionCreationFailed(SessionErrorCode.UNKNOWN)))
             return
         }
-        connectionService.setSessionId(created.sessionId)
-        connectionService.setAccessToken(created.accessToken)
+        attachSession(created)
         connectionService.resetReconnectBudget()
         connectionService.connectNow()
+    }
+
+    /** Same rules as the web and iOS SDKs: ungated, and dropped (not queued) when it can't run. */
+    suspend fun refreshVerifiedContext(notifyAgent: Boolean) {
+        val service = verifiedContextService
+        if (service == null) {
+            logger.w("refreshVerifiedContext ignored — no onContextRequired handler configured")
+            return
+        }
+        val session = currentSession
+        val request = currentContext
+        if (session == null || request == null || request.sessionId != session.sessionId) {
+            logger.i("refreshVerifiedContext ignored — no context_id for this session yet")
+            return
+        }
+        val claimed = synchronized(verifiedContextLock) {
+            (verifiedContextInFlightSessionId != request.sessionId).also {
+                if (it) verifiedContextInFlightSessionId = request.sessionId
+            }
+        }
+        if (!claimed) {
+            logger.i("refreshVerifiedContext ignored — a verified-context request is already in flight")
+            return
+        }
+        try {
+            _events.tryEmit(MessagingEvent.VerifiedContext(VerifiedContextStatus.Pending))
+            val status = service.run(request, session.accessToken, notifyAgent)
+            if (currentSession?.sessionId == request.sessionId) {
+                _events.tryEmit(MessagingEvent.VerifiedContext(status))
+            }
+        } finally {
+            clearVerifiedContextInFlight(request.sessionId)
+        }
     }
 
     suspend fun destroy() {
@@ -284,13 +327,57 @@ internal class Coordinator(
         heartbeatService.applyServerInterval(caps.heartbeatIntervalSeconds)
         // (the reconnect budget reset + isReady are handled on socket OPEN now.)
         logger.i("[Coordinator] session ready")
-        requestAgentJoinIfNeeded()
+        val contextId = event.payload.contextId
+        val session = currentSession
+        if (contextId != null && session != null) {
+            // Recorded on resume too, so refresh works there.
+            currentContext = VerifiedContextRequest(session.sessionId, contextId)
+        }
+        requestAgentJoinIfNeeded(session, contextId)
     }
 
-    private fun requestAgentJoinIfNeeded() {
+    private fun requestAgentJoinIfNeeded(session: CreatedSession?, contextId: String?) {
         if (agentJoinRequested) return
         agentJoinRequested = true
-        scope.launch { runCatching { transport.send(OutgoingEvent.RequestPolyAgentJoin) } }
+        scope.launch {
+            if (runVerifiedContextGate(session, contextId)) {
+                runCatching { transport.send(OutgoingEvent.RequestPolyAgentJoin) }
+            }
+        }
+    }
+
+    /**
+     * Holds the agent join (≤5s) until the token is submitted. `false` means don't send the join:
+     * the session changed, or the socket dropped and the reconnect's SESSION_START re-requests it.
+     */
+    private suspend fun runVerifiedContextGate(session: CreatedSession?, contextId: String?): Boolean {
+        val service = verifiedContextService ?: return true
+        if (session == null || contextId == null || verifiedContextGatedSessionId == session.sessionId) return true
+        verifiedContextGatedSessionId = session.sessionId
+        synchronized(verifiedContextLock) { verifiedContextInFlightSessionId = session.sessionId }
+        try {
+            _events.tryEmit(MessagingEvent.VerifiedContext(VerifiedContextStatus.Pending))
+            val status = service.run(VerifiedContextRequest(session.sessionId, contextId), session.accessToken)
+            if (currentSession?.sessionId != session.sessionId) {
+                logger.i("Session changed during verified context — dropping stale agent join")
+                return false
+            }
+            _events.tryEmit(MessagingEvent.VerifiedContext(status))
+        } finally {
+            clearVerifiedContextInFlight(session.sessionId)
+        }
+        if (connectionService.currentStatus() !is ConnectionStatus.Open) {
+            agentJoinRequested = false
+            return false
+        }
+        return true
+    }
+
+    /** Only the owning request clears the marker, so a late old-session gate can't let a refresh overlap the new one. */
+    private fun clearVerifiedContextInFlight(sessionId: String) {
+        synchronized(verifiedContextLock) {
+            if (verifiedContextInFlightSessionId == sessionId) verifiedContextInFlightSessionId = null
+        }
     }
 
     // ---- heartbeat tick: keep-alive + 2h cap + idle expiry ----
@@ -342,8 +429,7 @@ internal class Coordinator(
                     connectionService.notifyRefetchFailed()
                     return@launch
                 }
-                connectionService.setSessionId(created.sessionId)
-                connectionService.setAccessToken(created.accessToken)
+                attachSession(created)
                 connectionService.resetLastSequence() // new session → reset the cursor (isNewSession)
                 connectionService.resetReconnectBudget() // fresh connect → Connecting, not Reconnecting
                 connectionService.connectNow()
@@ -429,6 +515,14 @@ internal class Coordinator(
         }
     }
 
+    private fun attachSession(created: CreatedSession) {
+        currentSession = created
+        // A resumed session had its context set when it started.
+        if (created.wasResumed) verifiedContextGatedSessionId = created.sessionId
+        connectionService.setSessionId(created.sessionId)
+        connectionService.setAccessToken(created.accessToken)
+    }
+
     private fun cancelAllRetries() {
         retryJobs.values.forEach { it.cancel() }
         retryJobs.clear()
@@ -493,8 +587,7 @@ internal class Coordinator(
             if (created.hasInvalidApiKey || created.failure != null) return
             // A brand-new (not resumed) session → reset chat state.
             if (!created.wasResumed) { chatService.resetChat(isResume = false); agentJoinRequested = false }
-            connectionService.setSessionId(created.sessionId)
-            connectionService.setAccessToken(created.accessToken)
+            attachSession(created)
             connectionService.connectNow()
         }
     }

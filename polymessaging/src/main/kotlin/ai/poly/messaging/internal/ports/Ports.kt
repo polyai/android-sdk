@@ -38,6 +38,9 @@ internal interface RestApiPort {
     suspend fun ensureAccessToken(): String
 
     suspend fun createSession(token: String, context: SessionCreateContext): CreatedSession
+
+    /** `POST /sessions/{id}/context`. [accessToken] must be the one the session was created with. */
+    suspend fun submitVerifiedContext(accessToken: String, sessionId: String, token: String, notifyAgent: Boolean)
 }
 
 /** Connectivity source (offline/online). `NetworkMonitor` implements it; a fake drives resilience tests. */

@@ -4,11 +4,16 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-# Extend as rungs land (Compose×7 + Views×7).
-MODULES=(
-  ":examples:compose:01-hello"
-  ":examples:views:01-hello"
-)
+# Read from settings.gradle.kts so this list can't drift from the real modules.
+MODULES=()
+while IFS= read -r module; do
+  MODULES+=("$module")
+done < <(sed -n 's/^include("\(:examples:[^"]*\)").*/\1/p' settings.gradle.kts)
+
+if [ "${#MODULES[@]}" -eq 0 ]; then
+  echo "No sample modules found in settings.gradle.kts."
+  exit 1
+fi
 
 mkdir -p build-logs
 pass=0; fail=0; failed=()
