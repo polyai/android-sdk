@@ -329,42 +329,52 @@ internal class Coordinator(
         logger.i("[Coordinator] session ready")
         val contextId = event.payload.contextId
         val session = currentSession
+        requestAgentJoinIfNeeded(session, contextId)
         if (contextId != null && session != null) {
-            // Recorded on resume too, so refresh works there.
+            // Set after the gate claims its slot, so a refresh can't overlap it. Recorded on resume too.
             currentContext = VerifiedContextRequest(session.sessionId, contextId)
         }
-        requestAgentJoinIfNeeded(session, contextId)
     }
 
     private fun requestAgentJoinIfNeeded(session: CreatedSession?, contextId: String?) {
         if (agentJoinRequested) return
         agentJoinRequested = true
+        val gate = claimVerifiedContextGate(session, contextId)
         scope.launch {
-            if (runVerifiedContextGate(session, contextId)) {
+            if (gate == null || runVerifiedContextGate(gate)) {
                 runCatching { transport.send(OutgoingEvent.RequestPolyAgentJoin) }
             }
         }
+    }
+
+    private class VerifiedContextGate(val accessToken: String, val request: VerifiedContextRequest)
+
+    /** Claims the in-flight slot before the gate coroutine starts. `null` = no gate (once per fresh session). */
+    private fun claimVerifiedContextGate(session: CreatedSession?, contextId: String?): VerifiedContextGate? {
+        if (verifiedContextService == null || session == null || contextId == null) return null
+        if (verifiedContextGatedSessionId == session.sessionId) return null
+        verifiedContextGatedSessionId = session.sessionId
+        synchronized(verifiedContextLock) { verifiedContextInFlightSessionId = session.sessionId }
+        return VerifiedContextGate(session.accessToken, VerifiedContextRequest(session.sessionId, contextId))
     }
 
     /**
      * Holds the agent join (≤5s) until the token is submitted. `false` means don't send the join:
      * the session changed, or the socket dropped and the reconnect's SESSION_START re-requests it.
      */
-    private suspend fun runVerifiedContextGate(session: CreatedSession?, contextId: String?): Boolean {
-        val service = verifiedContextService ?: return true
-        if (session == null || contextId == null || verifiedContextGatedSessionId == session.sessionId) return true
-        verifiedContextGatedSessionId = session.sessionId
-        synchronized(verifiedContextLock) { verifiedContextInFlightSessionId = session.sessionId }
+    private suspend fun runVerifiedContextGate(gate: VerifiedContextGate): Boolean {
+        val sessionId = gate.request.sessionId
         try {
+            val service = checkNotNull(verifiedContextService)
             _events.tryEmit(MessagingEvent.VerifiedContext(VerifiedContextStatus.Pending))
-            val status = service.run(VerifiedContextRequest(session.sessionId, contextId), session.accessToken)
-            if (currentSession?.sessionId != session.sessionId) {
+            val status = service.run(gate.request, gate.accessToken)
+            if (currentSession?.sessionId != sessionId) {
                 logger.i("Session changed during verified context — dropping stale agent join")
                 return false
             }
             _events.tryEmit(MessagingEvent.VerifiedContext(status))
         } finally {
-            clearVerifiedContextInFlight(session.sessionId)
+            clearVerifiedContextInFlight(sessionId)
         }
         if (connectionService.currentStatus() !is ConnectionStatus.Open) {
             agentJoinRequested = false

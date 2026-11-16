@@ -230,7 +230,7 @@ internal class OkHttpRestApi(
         continuation.invokeOnCancellation { cancel() }
         enqueue(object : okhttp3.Callback {
             override fun onResponse(call: Call, response: Response) {
-                if (continuation.isActive) continuation.resume(response) else response.close()
+                continuation.resume(response) { _, value, _ -> value.close() }
             }
 
             override fun onFailure(call: Call, e: IOException) {
