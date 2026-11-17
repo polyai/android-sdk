@@ -358,6 +358,8 @@ private class ScenarioRestApi(
         createCalls++
         return CreatedSession(sessionId = nextSessionId, accessToken = token)
     }
+
+    override suspend fun submitVerifiedContext(accessToken: String, sessionId: String, token: String, notifyAgent: Boolean) {}
 }
 
 // ---- File-private event factories ----

@@ -43,6 +43,7 @@ public val MessagingEvent.debugSummary: String
         is MessagingEvent.HandoffAccepted -> "Handoff accepted"
         is MessagingEvent.HandoffFailed -> "Handoff failed: " + (payload.reason ?: "unknown")
         is MessagingEvent.HandoffTimeout -> "Handoff timeout"
+        is MessagingEvent.VerifiedContext -> "Verified context: " + status.debugLabel
     }
 
 public val MessagingEvent.debugDetail: String
@@ -89,6 +90,10 @@ public val MessagingEvent.debugDetail: String
             is MessagingEvent.Connected -> lines += "status: connected"
             is MessagingEvent.Disconnected -> lines += "error: ${error?.message ?: "none"}"
             is MessagingEvent.Reconnecting -> lines += "attempt: $attempt"
+            is MessagingEvent.VerifiedContext -> {
+                lines += "status: ${status.debugLabel}"
+                (status as? VerifiedContextStatus.Failed)?.let { lines += "reason: ${it.reason.message}" }
+            }
             else -> {}
         }
         return lines.joinToString("\n")

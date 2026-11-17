@@ -203,6 +203,7 @@ internal class WireDecoder(
                 heartbeatIntervalSeconds = caps.firstInt("heartbeat_interval_seconds"),
                 maxReconnectAttempts = caps.firstInt("max_reconnect_attempts"),
             ),
+            contextId = p.firstString("context_id")?.takeIf { it.isNotEmpty() },
         )
     }
 

@@ -11,6 +11,8 @@ import android.app.Application
 class FullReferenceApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Verified context: add `onContextRequired = { request -> yourBackend.sign(request.contextId) }`.
+        // See "Verified context" in the README.
         PolyMessaging.initialize(this, Configuration(apiKey = API_KEY, environment = Environment.US))
     }
 

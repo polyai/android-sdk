@@ -85,6 +85,9 @@ public sealed class MessagingEvent {
     public class HandoffFailed(@JvmField public val env: Envelope, @JvmField public val payload: HandoffFailedPayload) : MessagingEvent()
     public class HandoffTimeout(@JvmField public val env: Envelope, @JvmField public val payload: HandoffTimeoutPayload) : MessagingEvent()
 
+    // ---- Verified context (no envelope) ----
+    public class VerifiedContext(@JvmField public val status: VerifiedContextStatus) : MessagingEvent()
+
     // ---- Connection lifecycle (no envelope) ----
     public object Connected : MessagingEvent()
     public class Reconnecting(@JvmField public val attempt: Int) : MessagingEvent()
@@ -119,6 +122,7 @@ public sealed class MessagingEvent {
             is HandoffTimeout -> env
             is Connected, is Reconnecting, is Disconnected,
             is MessagePending, is MessageConfirmed, is MessageFailed,
+            is VerifiedContext,
             -> null
         }
 

@@ -170,10 +170,15 @@ public final class ai/poly/messaging/ChatSession {
 	public final fun getMessagesFlow ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getSystemMessages ()Ljava/util/List;
 	public final fun getUserMessages ()Ljava/util/List;
+	public final fun getVerifiedContext ()Lai/poly/messaging/VerifiedContextStatus;
+	public final fun getVerifiedContextFlow ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun isAgentTyping ()Z
 	public final fun isAgentTypingFlow ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun isReady ()Z
 	public final fun isReadyFlow ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun refreshVerifiedContext (ZLjava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun refreshVerifiedContext (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun refreshVerifiedContext$default (Lai/poly/messaging/ChatSession;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun removeMessage (Ljava/lang/String;)V
 	public final fun send (Ljava/lang/String;Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
 	public final fun send (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -217,6 +222,7 @@ public final class ai/poly/messaging/Configuration {
 	public final field hostIdentifier Ljava/lang/String;
 	public final field logLevel Lai/poly/messaging/LogLevel;
 	public final field maxReconnectAttempts Ljava/lang/Integer;
+	public final field onContextRequired Lkotlin/jvm/functions/Function2;
 	public final field sessionTimeoutSeconds Ljava/lang/Integer;
 	public final field streamingEnabled Z
 	public final field webrtcToken Ljava/lang/String;
@@ -229,7 +235,8 @@ public final class ai/poly/messaging/Configuration {
 	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;)V
 	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)V
 	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Ljava/lang/String;Lai/poly/messaging/Environment;Ljava/lang/String;ZLai/poly/messaging/LogLevel;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class ai/poly/messaging/Configuration$Builder {
@@ -240,6 +247,8 @@ public final class ai/poly/messaging/Configuration$Builder {
 	public final fun hostIdentifier (Ljava/lang/String;)Lai/poly/messaging/Configuration$Builder;
 	public final fun logLevel (Lai/poly/messaging/LogLevel;)Lai/poly/messaging/Configuration$Builder;
 	public final fun maxReconnectAttempts (Ljava/lang/Integer;)Lai/poly/messaging/Configuration$Builder;
+	public final fun onContextRequired (Lai/poly/messaging/VerifiedContextCallback;)Lai/poly/messaging/Configuration$Builder;
+	public final synthetic fun onContextRequired (Lkotlin/jvm/functions/Function2;)Lai/poly/messaging/Configuration$Builder;
 	public final fun sessionTimeoutSeconds (Ljava/lang/Integer;)Lai/poly/messaging/Configuration$Builder;
 	public final fun streamingEnabled (Z)Lai/poly/messaging/Configuration$Builder;
 	public final fun webrtcToken (Ljava/lang/String;)Lai/poly/messaging/Configuration$Builder;
@@ -687,6 +696,11 @@ public final class ai/poly/messaging/MessagingEvent$UserTyping : ai/poly/messagi
 	public fun <init> (Lai/poly/messaging/Envelope;)V
 }
 
+public final class ai/poly/messaging/MessagingEvent$VerifiedContext : ai/poly/messaging/MessagingEvent {
+	public final field status Lai/poly/messaging/VerifiedContextStatus;
+	public fun <init> (Lai/poly/messaging/VerifiedContextStatus;)V
+}
+
 public final class ai/poly/messaging/MessagingEventDebugKt {
 	public static final fun getDebugDetail (Lai/poly/messaging/MessagingEvent;)Ljava/lang/String;
 	public static final fun getDebugSummary (Lai/poly/messaging/MessagingEvent;)Ljava/lang/String;
@@ -835,6 +849,42 @@ public final class ai/poly/messaging/PolyError$Transport$ProtocolError : ai/poly
 	public fun hashCode ()I
 }
 
+public abstract class ai/poly/messaging/PolyError$VerifiedContext : ai/poly/messaging/PolyError {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class ai/poly/messaging/PolyError$VerifiedContext$CallbackFailed : ai/poly/messaging/PolyError$VerifiedContext {
+	public final field reason Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$VerifiedContext$CallbackTimedOut : ai/poly/messaging/PolyError$VerifiedContext {
+	public static final field INSTANCE Lai/poly/messaging/PolyError$VerifiedContext$CallbackTimedOut;
+}
+
+public final class ai/poly/messaging/PolyError$VerifiedContext$InvalidToken : ai/poly/messaging/PolyError$VerifiedContext {
+	public final field reason Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$VerifiedContext$SubmitFailed : ai/poly/messaging/PolyError$VerifiedContext {
+	public final field reason Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/PolyError$VerifiedContext$VerificationFailed : ai/poly/messaging/PolyError$VerifiedContext {
+	public final field reason Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
 public abstract class ai/poly/messaging/PolyError$Voice : ai/poly/messaging/PolyError {
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
@@ -914,6 +964,9 @@ public final class ai/poly/messaging/PolyMessagingClient {
 	public final fun getConnectionStatus ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getEvents ()Lkotlinx/coroutines/flow/SharedFlow;
 	public final fun getSessionState ()Lkotlinx/coroutines/flow/SharedFlow;
+	public final fun refreshVerifiedContext (ZLjava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
+	public final fun refreshVerifiedContext (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun refreshVerifiedContext$default (Lai/poly/messaging/PolyMessagingClient;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun resume (Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
 	public final fun resume (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun send (Ljava/lang/String;Ljava/util/concurrent/Executor;Lai/poly/messaging/Callback;)Lai/poly/messaging/Cancellable;
@@ -974,6 +1027,7 @@ public final class ai/poly/messaging/SessionErrorCode$Companion {
 
 public final class ai/poly/messaging/SessionStartPayload {
 	public final field capabilities Lai/poly/messaging/SessionCapabilities;
+	public final field contextId Ljava/lang/String;
 }
 
 public final class ai/poly/messaging/SessionState {
@@ -1149,6 +1203,44 @@ public final class ai/poly/messaging/UserMessageEchoPayload {
 
 public abstract interface class ai/poly/messaging/ValueListener {
 	public abstract fun onChanged (Ljava/lang/Object;)V
+}
+
+public abstract interface class ai/poly/messaging/VerifiedContextCallback {
+	public abstract fun onContextRequired (Lai/poly/messaging/VerifiedContextRequest;Lai/poly/messaging/Callback;)V
+}
+
+public final class ai/poly/messaging/VerifiedContextRequest {
+	public final field contextId Ljava/lang/String;
+	public final field sessionId Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public abstract class ai/poly/messaging/VerifiedContextStatus {
+}
+
+public final class ai/poly/messaging/VerifiedContextStatus$Declined : ai/poly/messaging/VerifiedContextStatus {
+	public static final field INSTANCE Lai/poly/messaging/VerifiedContextStatus$Declined;
+}
+
+public final class ai/poly/messaging/VerifiedContextStatus$Failed : ai/poly/messaging/VerifiedContextStatus {
+	public final field reason Lai/poly/messaging/PolyError$VerifiedContext;
+	public fun <init> (Lai/poly/messaging/PolyError$VerifiedContext;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+}
+
+public final class ai/poly/messaging/VerifiedContextStatus$Idle : ai/poly/messaging/VerifiedContextStatus {
+	public static final field INSTANCE Lai/poly/messaging/VerifiedContextStatus$Idle;
+}
+
+public final class ai/poly/messaging/VerifiedContextStatus$Pending : ai/poly/messaging/VerifiedContextStatus {
+	public static final field INSTANCE Lai/poly/messaging/VerifiedContextStatus$Pending;
+}
+
+public final class ai/poly/messaging/VerifiedContextStatus$Set : ai/poly/messaging/VerifiedContextStatus {
+	public static final field INSTANCE Lai/poly/messaging/VerifiedContextStatus$Set;
 }
 
 public final class ai/poly/messaging/VersionKt {

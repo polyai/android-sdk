@@ -18,6 +18,26 @@ class WireDecoderTests {
 
     // ---- Session events ----
 
+    private fun sessionStartJson(payloadExtra: String) = """{
+        "id": "evt_001", "sequence": 1, "timestamp": "2026-05-07T12:00:00Z",
+        "type": "EVENT_TYPE_SESSION_START",
+        "payload": { "capabilities": { "streaming": true }$payloadExtra }
+    }"""
+
+    @Test
+    fun decode_sessionStart_contextId() {
+        val e = decoder.decode(sessionStartJson(", \"context_id\": \"ctx_a1b2c3\"")).single() as MessagingEvent.SessionStart
+        assertEquals("ctx_a1b2c3", e.payload.contextId)
+    }
+
+    @Test
+    fun decode_sessionStart_absentOrEmptyContextId_isNull() {
+        val absent = decoder.decode(sessionStartJson("")).single() as MessagingEvent.SessionStart
+        val empty = decoder.decode(sessionStartJson(", \"context_id\": \"\"")).single() as MessagingEvent.SessionStart
+        assertEquals(null, absent.payload.contextId)
+        assertEquals(null, empty.payload.contextId)
+    }
+
     @Test
     fun decode_sessionStart_capabilities() {
         val json = """{

@@ -84,6 +84,12 @@ public class ChatSession internal constructor(
     @get:JvmName("getFailureReasonFlow")
     public val failureReason: StateFlow<PolyError?> = _failureReason.asStateFlow()
 
+    private val _verifiedContext = MutableStateFlow<VerifiedContextStatus>(VerifiedContextStatus.Idle)
+
+    /** Outcome of `Configuration.onContextRequired` for the current session. */
+    @get:JvmName("getVerifiedContextFlow")
+    public val verifiedContext: StateFlow<VerifiedContextStatus> = _verifiedContext.asStateFlow()
+
     private val streamingBubbles = HashMap<String, UUID>() // messageId -> bubble id
     private var currentSessionId: String? = null
     private var typingDismissJob: Job? = null
@@ -122,6 +128,13 @@ public class ChatSession internal constructor(
     public suspend fun sendTyping(): Unit = client.sendTyping()
     public suspend fun end(): Unit = client.end()
 
+    /**
+     * Re-run `onContextRequired` and resubmit, e.g. after a mid-chat sign-in. Set [notifyAgent] to
+     * let the agent react. The outcome lands on [verifiedContext].
+     */
+    public suspend fun refreshVerifiedContext(notifyAgent: Boolean = false): Unit =
+        client.refreshVerifiedContext(notifyAgent)
+
     public fun clearChat() {
         _messages.value = emptyList()
         streamingBubbles.clear()
@@ -129,6 +142,7 @@ public class ChatSession internal constructor(
         _hasStarted.value = false
         _failureReason.value = null
         _agentAvatarUrl.value = null
+        _verifiedContext.value = VerifiedContextStatus.Idle
         clearTypingIndicator()
     }
 
@@ -166,6 +180,10 @@ public class ChatSession internal constructor(
     public fun getHasEnded(): Boolean = _hasEnded.value
     public fun isReady(): Boolean = _isReady.value
     public fun getFailureReason(): PolyError? = _failureReason.value
+    public fun getVerifiedContext(): VerifiedContextStatus = _verifiedContext.value
+
+    public fun refreshVerifiedContext(notifyAgent: Boolean, executor: Executor, callback: Callback<Unit>): Cancellable =
+        client.refreshVerifiedContext(notifyAgent, executor, callback)
 
     public fun send(text: String, executor: Executor, callback: Callback<Unit>): Cancellable =
         client.runAsync(executor, callback) { client.send(text) }
@@ -181,7 +199,7 @@ public class ChatSession internal constructor(
         val job = scope.launch {
             combine(
                 messages, connection, isAgentTyping, agentAvatarUrl,
-                hasStarted, hasEnded, isReady, failureReason,
+                hasStarted, hasEnded, isReady, failureReason, verifiedContext,
             ) { _ -> Unit }.collect { executor.execute { listener.onChanged(this@ChatSession) } }
         }
         return Cancellable { job.cancel() }
@@ -240,6 +258,7 @@ public class ChatSession internal constructor(
                 if (!alreadyShown) append(ChatMessage.User(UserMessage(event.payload.text, Delivery.SENT, event.env.id)))
             }
             is MessagingEvent.AgentJoined -> event.payload.avatarUrl?.let { _agentAvatarUrl.value = it }
+            is MessagingEvent.VerifiedContext -> _verifiedContext.value = event.status
             else -> {}
         }
     }
@@ -308,6 +327,7 @@ public class ChatSession internal constructor(
             _hasStarted.value = false
             _failureReason.value = null
             _agentAvatarUrl.value = null
+            _verifiedContext.value = VerifiedContextStatus.Idle
             streamingBubbles.clear()
             clearTypingIndicator()
         }
